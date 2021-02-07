@@ -8,6 +8,10 @@ This is A model of working memory coupled with visual knowledge
 To train the model:
 Run the Training.py and save the model in output1 (you can run 10 times and save them in differnt directories from output1 to outut10)
 
+To train the classifiers:
+
+Run the Training_classifier.py. This saves the classifiers trained on each model (output1 to output10)
+
 
 To get the figures in the manuscript:
 
