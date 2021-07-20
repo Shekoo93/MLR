@@ -1,8 +1,8 @@
 # MLR
-This is A model of working memory coupled with visual knowledge
+This is a model of working memory coupled with visual knowledge
 
--The mVAE is trained on MNIST and f-MNIST
--THe skip connection (from L1 to L5) was trained on MNIST and f-MNIST that were presented in different locations with some degrees of rotation
+-The visual knowledge represented by mVAE is trained on MNIST and f-MNIST
+-The skip connection (from L1 to L5) was trained on cropped MNIST and f-MNIST that were presented in different locations with some degrees of rotation
 
 
 To train the model:
