@@ -15,7 +15,9 @@ Run the Training_classifier.py. This saves the classifiers trained on each model
 
 To get the figures in the manuscript:
 
-1. run the plot.py file. Within the file there are flags that can be set to 1 or zero corresponding to the figures/tables in the manuscript
+run the plot.py file. Within the file there are flags that can be set to 1 or zero corresponding to the figures/tables in the manuscript
+
+To get the prre-trained model in addition to the simulation results please visit the OSF webpage (https://osf.io/tpzqk/). Run the plots.py file to reproduce the results
 
 # requirements:
 The model was programmed in Python 3.7.6 . in a torch environment version 1.3.1. The imported packages are listed here: torch, numpy , torch.nn , torch.nn.functional, torch.optim , imageio, os, copy, matplotlib.pyplot , matplotlib.image , torchvision,  datasets, transforms, utils, torch.autograd, Variable, torchvision.utils, save_image, sklearn, svm, sklearn.metrics, classification_report, confusion_matrix, tqdm, PIL, Image, ImageOps, ImageEnhance, __version__ as PILLOW_VERSION, joblib, dump, load. 
