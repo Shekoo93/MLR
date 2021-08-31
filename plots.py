@@ -43,7 +43,7 @@ from PIL import ImageFilter
 import imageio, time
 import math
 import sys
-
+import pandas as pd
 
 config.init()
 
@@ -1007,7 +1007,7 @@ if Tab1SuppFlag ==1:
 
 
     perms = hugepermnum
-    #perms=100
+    #perms=5
 
     setSizes = [1,2,3,4]  # number of tokens
 
@@ -1034,7 +1034,17 @@ if Tab1SuppFlag ==1:
     totalSEshape_cat=list()
     totalAccuracyColor_cat=list()
     totalSEcolor_cat=list()
-
+    
+    shape_dotplots_models=list() #data for the dot plots
+    color_dotplots_models=list()
+    shapeVisual_dotplots_models=list()
+    colorVisual_dotplots_models=list()
+    shapeWlabels_dotplots_models=list()
+    colorWlabels_dotplots_models=list()
+    shape_half_dotplots_models=list()
+    color_half_dotplots_models=list()
+    shape_cat_dotplots_models=list()
+    color_cat_dotplots_models=list()
 
 
     for numItems in setSizes:
@@ -1053,6 +1063,8 @@ if Tab1SuppFlag ==1:
             accuracyColorModels_half = list()
             accuracyShapeModels_cat = list()
             accuracyColorModels_cat = list()
+            
+           
 
             for modelNumber in range(1, numModels + 1):  # which model should be run, this can be 1 through 10
 
@@ -1209,45 +1221,68 @@ if Tab1SuppFlag ==1:
                 accuracyColorModels_half.append(sum(accuracyColor_half) / perms)
                 accuracyShapeModels_cat.append(sum(accuracyShape_cat) / perms)
                 accuracyColorModels_cat.append(sum(accuracyColor_cat) / perms)
-
+            
+          
+            shape_dotplots_models.append(torch.stack(accuracyShapeModels).view(1,-1))
             totalAccuracyShape.append(torch.stack(accuracyShapeModels).mean())
             totalSEshape.append(torch.stack(accuracyShapeModels).std()/math.sqrt(numModels))
-
+            
+            color_dotplots_models.append(torch.stack(accuracyColorModels).view(1,-1))
             totalAccuracyColor.append(torch.stack(accuracyColorModels).mean())
             totalSEcolor.append(torch.stack(accuracyColorModels).std() / math.sqrt(numModels))
-
+            
+            shapeVisual_dotplots_models.append(torch.stack(accuracyShapeVisualModels).view(1,-1))
             totalAccuracyShape_visual.append(torch.stack(accuracyShapeVisualModels).mean())
             totalSEshapeVisual.append(torch.stack(accuracyShapeVisualModels).std()/math.sqrt(numModels))
 
+            colorVisual_dotplots_models.append(torch.stack(accuracyColorVisualModels).view(1,-1))
             totalAccuracyColor_visual.append(torch.stack(accuracyColorVisualModels).mean())
             totalSEcolorVisual.append(torch.stack(accuracyColorVisualModels).std() / math.sqrt(numModels))
-
+            
+            shapeWlabels_dotplots_models.append(torch.stack(accuracyShapeWlabelsModels).view(1,-1))
             totalAccuracyShapeWlabels .append(torch.stack(accuracyShapeWlabelsModels).mean())
             totalSEshapeWlabels.append(torch.stack(accuracyShapeWlabelsModels).std() / math.sqrt(numModels))
 
+            colorWlabels_dotplots_models.append(torch.stack(accuracyColorWlabelsModels).view(1,-1))
             totalAccuracyColorWlabels.append(torch.stack(accuracyColorWlabelsModels).mean())
             totalSEcolorWlabels.append(torch.stack(accuracyColorWlabelsModels).std() / math.sqrt(numModels))
 
+            shape_half_dotplots_models.append(torch.stack(accuracyShapeModels_half).view(1,-1))
             totalAccuracyShape_half.append(torch.stack(accuracyShapeModels_half).mean())
             totalSEshape_half.append(torch.stack(accuracyShapeModels_half).std() / math.sqrt(numModels))
 
+            color_half_dotplots_models.append(torch.stack(accuracyColorModels_half).view(1,-1))
             totalAccuracyColor_half.append(torch.stack(accuracyColorModels_half).mean())
             totalSEcolor_half.append(torch.stack(accuracyColorModels_half).std() / math.sqrt(numModels))
             
+            shape_cat_dotplots_models.append(torch.stack(accuracyShapeModels_cat).view(1,-1))
             totalAccuracyShape_cat.append(torch.stack(accuracyShapeModels_cat).mean())
             totalSEshape_cat.append(torch.stack(accuracyShapeModels_cat).std() / math.sqrt(numModels))
-
+            
+            color_cat_dotplots_models.append(torch.stack(accuracyColorModels_cat).view(1,-1))
             totalAccuracyColor_cat.append(torch.stack(accuracyColorModels_cat).mean())
             totalSEcolor_cat.append(torch.stack(accuracyColorModels_cat).std() / math.sqrt(numModels))
+            
+    
 
+ 
 
+             
 
-
-
-
-
+    print(shape_boxplots_models)
+    print(color_boxplots_models)
+    print(shapeVisual_boxplots_models)
+    print(colorVisual_boxplots_models)
+    print(shapeWlabels_boxplots_models)
+    print(colorWlabels_boxplots_models) 
+    print(shape_half_boxplots_models)
+    print(color_half_boxplots_models)
+    print(shape_cat_boxplots_models)
+    print(color_cat_boxplots_models)
 
     outputFile.write('Table 3, accuracy of ShapeLabel')
+ 
+
     for i in range(len(setSizes)):
         outputFile.write('\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyShape[i],totalSEshape[i] ))
 
