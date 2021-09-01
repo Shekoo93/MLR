@@ -104,8 +104,8 @@ Fig2cFlag = 0 #token reconstructions
 
 bindingtestFlag = 0
 
-Tab1Flag_noencoding = 0  #classify reconstructions (no memory)
-Tab1Flag =0 #classify binding pool memories
+Tab1Flag_noencoding = 1  #classify reconstructions (no memory)
+Tab1Flag =1 #classify binding pool memories
 Tab1SuppFlag = 1  # memory of labels (this is table 1 + Figure 2 in supplemental which includes the data in Figure 3)
 Tab2Flag = 0 #Cross correlations for familiar vs novel
 noveltyDetectionFlag=0
@@ -721,16 +721,18 @@ else:
 #############Table 1 in the manuscript (classification accuracy of shape bottleneck of VAE)
 numModels = 10
 
-perms=10
+perms=hugepermnum
+perms=5
 if Tab1Flag_noencoding == 1:
 
     print('Table 1 shape labels predicted by the classifier before encoded in memory')
 
-
+    
     SSreport = np.tile(0.0,[perms,numModels])
     SCreport = np.tile(0.0,[perms,numModels])
     CCreport = np.tile(0.0,[perms,numModels])
     CSreport = np.tile(0.0,[perms,numModels])
+   
     
 
     for modelNumber in range(1,numModels +1):  # which model should be run, this can be 1 through 10
@@ -750,6 +752,7 @@ if Tab1Flag_noencoding == 1:
                                                                                                        clf_colorS)
 
            pred_ss, pred_sc, SSreport[rep,modelNumber-1], SCreport[rep,modelNumber-1] = classifier_shape_test('noskip', clf_shapeS, clf_shapeC)
+           
      
     print(CCreport)
     CCreport=CCreport.reshape(1,-1)
@@ -1269,16 +1272,16 @@ if Tab1SuppFlag ==1:
 
              
 
-    print(shape_boxplots_models)
-    print(color_boxplots_models)
-    print(shapeVisual_boxplots_models)
-    print(colorVisual_boxplots_models)
-    print(shapeWlabels_boxplots_models)
-    print(colorWlabels_boxplots_models) 
-    print(shape_half_boxplots_models)
-    print(color_half_boxplots_models)
-    print(shape_cat_boxplots_models)
-    print(color_cat_boxplots_models)
+    print(shape_dotplots_models)
+    print(color_dotplots_models)
+    print(shapeVisual_dotplots_models)
+    print(colorVisual_dotplots_models)
+    print(shapeWlabels_dotplots_models)
+    print(colorWlabels_dotplots_models) 
+    print(shape_half_dotplots_models)
+    print(color_half_dotplots_models)
+    print(shape_cat_dotplots_models)
+    print(color_cat_dotplots_models)
 
     outputFile.write('Table 3, accuracy of ShapeLabel')
  
