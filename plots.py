@@ -257,7 +257,7 @@ else:
 
 if Fig2bFlag==1:
     print('generating Figure 2b, Novel characters retrieved from memory of L1 and Bottleneck')
-    #loads novel shapes (Bengali charachters)
+    
     numimg = 6
     trans2 = transforms.ToTensor()
 
@@ -722,7 +722,7 @@ else:
 numModels = 10
 
 perms=hugepermnum
-perms=5
+
 if Tab1Flag_noencoding == 1:
 
     print('Table 1 shape labels predicted by the classifier before encoded in memory')
@@ -798,14 +798,14 @@ if Tab1Flag == 1:
         load_checkpoint(
             'output{modelNumber}/checkpoint_threeloss_singlegrad200.pth'.format(modelNumber=modelNumber))
 
-        print('doing model {0} for Table 2'.format(modelNumber))
+        print('doing model {0} for Table 1'.format(modelNumber))
         clf_shapeS = load('output{num}/ss{num}.joblib'.format(num=modelNumber))
         clf_shapeC = load('output{num}/sc{num}.joblib'.format(num=modelNumber))
         clf_colorC = load('output{num}/cc{num}.joblib'.format(num=modelNumber))
         clf_colorS = load('output{num}/cs{num}.joblib'.format(num=modelNumber))
 
 
-        print('Doing Table 2')
+        print('Doing Table 1')
         
         for rep in range(0,perms):
             numcolors = 0
@@ -850,7 +850,7 @@ if Tab1Flag == 1:
                                                                                         l2_coeff,
                                                                                         normalize_fact_familiar)
 
-           # Table 2: classifier accuracy for shape and color for memory retrievals
+           # Table 1: classifier accuracy for shape and color for memory retrievals
             print('classifiers accuracy for memory retrievals of BN_both for Table 2')
             pred_ss, pred_sc, SSreport_both[rep,modelNumber-1], SCreport_both[rep,modelNumber-1] = classifier_shapemap_test_imgs(shape_out_BP_both, shapelabels,
                                                                              colorlabels, bs_testing, clf_shapeS,
@@ -860,7 +860,7 @@ if Tab1Flag == 1:
                                                                              
         
 
-            # Table 2: classifier accuracy for shape and color for memory retrievals
+            # Table 1: classifier accuracy for shape and color for memory retrievals
             print('classifiers accuracy for memory retrievals of BN_shapeonly for Table 2')
             pred_ss, pred_sc, SSreport_shape[rep,modelNumber - 1], SCreport_shape[
             rep,modelNumber - 1] = classifier_shapemap_test_imgs(shape_out_BP_shapeonly, shapelabels,
@@ -887,7 +887,7 @@ if Tab1Flag == 1:
                                                                                                 'noskip')  # bp retrievals from layer 1
             z_color = vae.sampling(mu_color, log_var_color).cuda()
             z_shape = vae.sampling(mu_shape, log_var_shape).cuda()
-            # Table 2 (memory retrievals from L1)
+            # Table 1 (memory retrievals from L1)
             print('classifiers accuracy for L1 ')
             pred_ss, pred_sc, SSreport_l1[rep,modelNumber - 1], SCreport_l1[rep,modelNumber - 1] = classifier_shapemap_test_imgs(z_shape, shapelabels, colorlabels,
                                                                              bs_testing, clf_shapeS, clf_shapeC)
@@ -900,7 +900,7 @@ if Tab1Flag == 1:
             z_color = vae.sampling(mu_color, log_var_color).cuda()
             z_shape = vae.sampling(mu_shape, log_var_shape).cuda()
 
-            # Table 2 (memory retrievals from L2)
+            # Table 1 (memory retrievals from L2)
             print('classifiers accuracy for L2 ')
             pred_ss, pred_sc, SSreport_l2[rep,modelNumber - 1], SCreport_l2[rep,modelNumber - 1] = classifier_shapemap_test_imgs(z_shape, shapelabels, colorlabels,
                                                                              bs_testing, clf_shapeS, clf_shapeC)
@@ -988,7 +988,7 @@ if Tab1Flag == 1:
             CSreport_l2.std()/math.sqrt(numModels*perms)))
 
 else:
-    print('Skipping Table 2')
+    print('Skipping Table 1')
             
 
         
@@ -999,7 +999,7 @@ else:
 
 if Tab1SuppFlag ==1:
 
-    print('Table 3 computing the accuracy of storing labels along with shape and color information')
+    print('Table 1S computing the accuracy of storing labels along with shape and color information')
 
     ftest_dataset = datasets.FashionMNIST(root='./fashionmnist_data/', train=False,transform=transforms.Compose([Colorize_func_secret, transforms.ToTensor()]),download=False)
     ftest_dataset.targets= ftest_dataset.targets+10
@@ -1087,7 +1087,7 @@ if Tab1SuppFlag ==1:
                 load_checkpoint(
                     'output{modelNumber}/checkpoint_threeloss_singlegrad200.pth'.format(modelNumber=modelNumber))
 
-                print('doing model {0} for Table 3'.format(modelNumber))
+                print('doing model {0} for Table 1S'.format(modelNumber))
                 clf_shapeS = load('output{num}/ss{num}.joblib'.format(num=modelNumber))
                 clf_shapeC = load('output{num}/sc{num}.joblib'.format(num=modelNumber))
                 clf_colorC = load('output{num}/cc{num}.joblib'.format(num=modelNumber))
@@ -1283,7 +1283,7 @@ if Tab1SuppFlag ==1:
     print(shape_cat_dotplots_models)
     print(color_cat_dotplots_models)
 
-    outputFile.write('Table 3, accuracy of ShapeLabel')
+    outputFile.write('Table 1S, accuracy of ShapeLabel')
  
 
     for i in range(len(setSizes)):
