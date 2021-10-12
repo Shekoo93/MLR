@@ -10,7 +10,7 @@ Run the Training.py and save the model in output1 (you can run 10 times and save
 
 To train the classifiers:
 
-Run the Training_classifier.py. This saves the classifiers trained on each model (output1 to output10)
+Run the Training_classifier.py. This trains and saves the classifiers trained on each model (output1 to output10)
 
 
 To get the figures in the manuscript:
