@@ -95,11 +95,11 @@ Fig2cFlag = 0        #token reconstructions (reconstructing multiple items)
 
 bindingtestFlag = 0  #simulating binding shape-color of two items
 
-Tab1Flag_noencoding = 1 #classify reconstructions (no memory)
-Tab1Flag =1             #classify binding pool memories
-Tab1SuppFlag = 1        #memory of labels (this is table 1 + Figure 2 in supplemental which includes the data in Figure 3)
+Tab1Flag_noencoding = 0 #classify reconstructions (no memory)
+Tab1Flag =0             #classify binding pool memories
+Tab1SuppFlag = 0        #memory of labels (this is table 1 + Figure 2 in supplemental which includes the data in Figure 3)
 Tab2Flag = 0            #Cross correlations for familiar vs novel
-noveltyDetectionFlag=0  #detecting whether a stimulus is familiar or not
+noveltyDetectionFlag=1  #detecting whether a stimulus is familiar or not
 latents_crossFlag = 0   #Cross correlations for familiar vs novel for when infromation is stored from the shape/color maps vs. L1. versus straight reconstructions 
                         #This Figure is not included in the paper
 
@@ -119,23 +119,8 @@ save_image(sample[0:8], 'output{num}/sample.png'.format(num=modelNumber))
 save_image(sample_c[0:8], 'output{num}/sample_color.png'.format(num=modelNumber))
 save_image(sample_s[0:8], 'output{num}/sample_shape.png'.format(num=modelNumber))
 
-
-#loads familiar shapes
-ftest_dataset = datasets.FashionMNIST(root='./fashionmnist_data/', train=False,transform=transforms.Compose([Colorize_func, transforms.ToTensor()]),download=False)
-ftest_dataset.targets= ftest_dataset.targets+10
-test_dataset_MNIST = datasets.MNIST(root='./mnist_data/', train=False,transform=transforms.Compose([Colorize_func, transforms.ToTensor()]),download=False)
-
-#build a combined dataset out of MNIST and Fasion MNIST
 test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))
 test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_testing, shuffle=True, num_workers=nw)
-
-numcolors = 0
-colorlabels = np.random.randint(0, 10, 100000) #randomizing color every time drawing from the loader
-test_colorlabels = thecolorlabels(test_dataset)
-images, labels = next(iter(test_loader_smaller)) #load a smaller set of images
-
-orig_imgs = images.view(-1, 3 * 28 * 28).cuda()
-imgs = orig_imgs.clone()
 
 
 
@@ -327,7 +312,20 @@ if Fig2bFlag==1:
 #####################################Figure 2c #########################################################################3
 if Fig2cFlag ==1 :
     print('generating Figure 2c. Storing and retrieving multiple items')
-    imgs = orig_imgs.clone()   #we're using the same images that we originally loaded
+    
+    numimg= 100 #number of images to display in this figure
+    bs_testing = numimg
+
+    #build a combined dataset out of MNIST and Fasion MNIST
+    test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))
+    test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_testing, shuffle=True, num_workers=nw)
+
+    numcolors = 0
+    colorlabels = np.random.randint(0, 10, 100000)
+    test_colorlabels = thecolorlabels(test_dataset)
+    images, labels = next(iter(test_loader_smaller))
+    orig_imgs = images.view(-1, 3 * 28 * 28).cuda()
+    imgs = orig_imgs.clone()
 
     l1_act, l2_act, shape_act, color_act = activations(imgs)
 
@@ -1307,6 +1305,8 @@ if Tab1SuppFlag ==1:
 ######This part is to detect whether a stimulus is novel or familiar
 
 if noveltyDetectionFlag==1:
+    
+  
     perms=smallpermnum
     numModels=10
     
@@ -1334,6 +1334,3 @@ if noveltyDetectionFlag==1:
             '\naccuracy of detecting the novel shapes : mean is {0:.4g} and SE is {1:.4g} '.format(mean_nov, nov_SE))
 
 outputFile.close()
-
-
-
