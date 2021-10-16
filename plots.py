@@ -75,31 +75,31 @@ l2_coeff = 1          #coefficient of layer 2
 shapeLabel_coeff= 1   #coefficient of the shape label
 colorLabel_coeff = 1  #coefficient of the color label
 
-bpsize = 2500
+bpsize = 2500         #size of the binding pool
 token_overlap = .4
-bpPortion = int(token_overlap *bpsize) # number bp neurons used for each item
+bpPortion = int(token_overlap *bpsize) # number binding pool neurons used for each item
 
 normalize_fact_familiar=1
 normalize_fact_novel=0.8
 all_imgs = []
 
-
+#number of repetions for statistical inference
 hugepermnum=10000 
 bigpermnum = 500
 smallpermnum = 100
 
-Fig1SuppFlag =0  #reconstructions straight from the VAE (supplementary figure 1)
-Fig2aFlag = 0    #binding pool reconstructions
-Fig2bFlag = 0    #novel reconstructions
-Fig2cFlag = 0    #token reconstructions
+Fig1SuppFlag =0      #reconstructions straight from the VAE (supplementary figure 1)
+Fig2aFlag = 0        #binding pool reconstructions
+Fig2bFlag = 0        #novel reconstructions
+Fig2cFlag = 0        #token reconstructions (reconstructing multiple items)
 
-bindingtestFlag = 0
+bindingtestFlag = 0  #simulating binding shape-color of two items
 
 Tab1Flag_noencoding = 1 #classify reconstructions (no memory)
 Tab1Flag =1             #classify binding pool memories
 Tab1SuppFlag = 1        #memory of labels (this is table 1 + Figure 2 in supplemental which includes the data in Figure 3)
 Tab2Flag = 0            #Cross correlations for familiar vs novel
-noveltyDetectionFlag=0
+noveltyDetectionFlag=0  #detecting whether a stimulus is familiar or not
 latents_crossFlag = 0   #Cross correlations for familiar vs novel for when infromation is stored from the shape/color maps vs. L1. versus straight reconstructions 
                         #This Figure is not included in the paper
 
@@ -120,7 +120,7 @@ save_image(sample_c[0:8], 'output{num}/sample_color.png'.format(num=modelNumber)
 save_image(sample_s[0:8], 'output{num}/sample_shape.png'.format(num=modelNumber))
 
 
- # loads familiar shapes
+#loads familiar shapes
 ftest_dataset = datasets.FashionMNIST(root='./fashionmnist_data/', train=False,transform=transforms.Compose([Colorize_func, transforms.ToTensor()]),download=False)
 ftest_dataset.targets= ftest_dataset.targets+10
 test_dataset_MNIST = datasets.MNIST(root='./mnist_data/', train=False,transform=transforms.Compose([Colorize_func, transforms.ToTensor()]),download=False)
@@ -130,9 +130,9 @@ test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset
 test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_testing, shuffle=True, num_workers=nw)
 
 numcolors = 0
-colorlabels = np.random.randint(0, 10, 100000)
+colorlabels = np.random.randint(0, 10, 100000) #randomizing color every time drawing from the loader
 test_colorlabels = thecolorlabels(test_dataset)
-images, labels = next(iter(test_loader_smaller))#peel off a large number of images
+images, labels = next(iter(test_loader_smaller)) #load a smaller set of images
 
 orig_imgs = images.view(-1, 3 * 28 * 28).cuda()
 imgs = orig_imgs.clone()
@@ -152,7 +152,7 @@ if Fig1SuppFlag ==1:
     numcolors = 0
     colorlabels = np.random.randint(0, 10, 100000)
     test_colorlabels = thecolorlabels(test_dataset)
-    images, labels = next(iter(test_loader_smaller))#peel off a large number of images
+    images, labels = next(iter(test_loader_smaller))
     orig_imgs = images.view(-1, 3 * 28 * 28).cuda()
     imgs = orig_imgs.clone()
 
@@ -163,7 +163,8 @@ if Fig1SuppFlag ==1:
     bothRecon = vae.decoder_noskip(shape_act, color_act, 0).cuda()  # reconstruction directly from the bottleneck (Shape and color)
     shapeRecon= vae.decoder_shape(shape_act, color_act, 0).cuda()  # reconstruction directly from the bottleneck (shape map)
     colorRecon= vae.decoder_color(shape_act, color_act, 0).cuda()  # reconstruction directly from the bottleneck (color map)
-
+    
+    #saves the images
     save_image(
         torch.cat([imgs[0: numimg].view(numimg, 3, 28, 28), bothRecon[0: numimg].view(numimg, 3, 28, 28),
                    shapeRecon[0: numimg].view(numimg, 3, 28, 28), colorRecon[0: numimg].view(numimg, 3, 28, 28)], 0),
@@ -176,9 +177,7 @@ if Fig1SuppFlag ==1:
 
 
 ######################## Figure 2a #######################################################################################
-#store items using both features, and separately color and shape
-
-#figure 2a memory retrievals
+#store items using both features, and separately color and shape (memory retrievals)
 
 
 if Fig2aFlag==1:
@@ -200,7 +199,7 @@ if Fig2aFlag==1:
     l1_act, l2_act, shape_act, color_act = activations(imgs)  #get activations from this small set of images
 
 
-
+    #binding pool outputs
     BP_in, shape_out_BP_both, color_out_BP_both, BP_layerI_junk, BP_layer2_junk =            BP(bpPortion , l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff,l1_coeff,l2_coeff,normalize_fact_familiar)
     BP_in, shape_out_BP_shapeonly,  color_out_BP_shapeonly, BP_layerI_junk, BP_layer2_junk = BP(bpPortion , l1_act, l2_act, shape_act, color_act, shape_coeff, 0,0,0,normalize_fact_familiar)
     BP_in,  shape_out_BP_coloronly, color_out_BP_coloronly, BP_layerI_junk, BP_layer2_junk = BP(bpPortion , l1_act, l2_act, shape_act, color_act, 0, color_coeff,0,0,normalize_fact_familiar)
@@ -222,8 +221,8 @@ if Fig2aFlag==1:
         normalize=False,
         range=(-1, 1),
     )
-    #memory retrievals from L1-L2 storage
-
+    
+    #memory retrievals when information was stored from L1 and L2
     BP_layer1_noskip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(BP_layerI_out,BP_layer2_out, 1, 'noskip') #bp retrievals from layer 1
     BP_layer2_noskip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(BP_layerI_out,BP_layer2_out, 2, 'noskip') #bp retrievals from layer 2
 
@@ -340,9 +339,6 @@ if Fig2cFlag ==1 :
         imgs = orig_imgs.clone()
         save_image(imgs[0: n].view(n, 3, 28, 28), 'output{num}/figure2coriginals{d}.png'.format(num=modelNumber,d=n))
         save_image(retrievals[0: n].view(n, 3, 28, 28), 'output{num}/figure2cretrieved{d}.png'.format(num=modelNumber,d=n))
-else:
-    print('skipping figure 2c')
-
 
 ###################Table 2##################################################
 if Tab2Flag ==1:
