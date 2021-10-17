@@ -119,8 +119,8 @@ save_image(sample[0:8], 'output{num}/sample.png'.format(num=modelNumber))
 save_image(sample_c[0:8], 'output{num}/sample_color.png'.format(num=modelNumber))
 save_image(sample_s[0:8], 'output{num}/sample_shape.png'.format(num=modelNumber))
 
-test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))
-test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_testing, shuffle=True, num_workers=nw)
+test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))    #combine fashion-mnist and mnist
+test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_testing, shuffle=True, num_workers=nw)  #load the dataset
 
 
 
