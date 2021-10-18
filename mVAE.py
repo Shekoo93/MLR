@@ -530,11 +530,11 @@ def activation_fromBP(L1_activationBP, L2_activationBP, layernum):
         color_act_bp = vae.sampling(mu_color, log_var_color)
     return shape_act_bp, color_act_bp
 
-
+#binding pool function for ONE ITEM (also BPTokens function can be used, but this code is faster for 1 item)
 def BP(bp_outdim, l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff,l1_coeff,l2_coeff, normalize_fact):
     with torch.no_grad():
-        bp_in1_dim = l1_act.shape[1]  # dim=512    #inputs to the binding pool
-        bp_in2_dim = l2_act.shape[1]  # dim =256
+        bp_in1_dim = l1_act.shape[1]  # dim=256    #inputs to the binding pool
+        bp_in2_dim = l2_act.shape[1]  # dim =128
         bp_in3_dim = shape_act.shape[1]  # dim=4
         bp_in4_dim = color_act.shape[1]  # dim=4
         
