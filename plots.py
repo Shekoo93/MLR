@@ -229,7 +229,8 @@ if Fig2bFlag==1:
     
     numimg = 6
     trans2 = transforms.ToTensor()
-
+    
+    #loads the novel stimuli (Bengali charachters)
     for i in range (1,numimg+1):
         img = Image.open('{each}_thick.png'.format(each=i))
         img = np.mean(img,axis=2)
@@ -248,50 +249,25 @@ if Fig2bFlag==1:
             normalize=False,
             range=(-1, 1),
         )
+    #increasing the difference between positive and zero-level activations in L1 using the follwoing transformation:
     l1_act, l2_act, shape_act, color_act = activations(imgs)
     l1_act_tr = l1_act.clone()
-
     l1_act_tr[l1_act!=0] = l1_act_tr[l1_act!=0] + 1
     l1_act_tr[l1_act_tr == 0] = -3
 
 
-
+    # BP outputs of L1, L2 shape and color maps
     BP_in, shape_out_BP, color_out_BP, BP_layerI_junk, BP_layer2_junk = BP(bpPortion, l1_act_tr, l2_act, shape_act, color_act, shape_coeff, color_coeff,0,0,normalize_fact_novel)
     BPRep, shape_out_BP_junk, color_out_BP_junk, BP_layerI_out, BP_layer2_junk = BP(bpPortion, l1_act_tr, l2_act, shape_act, color_act, 0, 0,l1_coeff,0,normalize_fact_novel)
     BP_in, shape_out_BP_junk, color_out_BP_junk, BP_layerI_junk, BP_layer2_out = BP(bpPortion, l1_act_tr, l2_act, shape_act, color_act, 0, 0,0,l2_coeff,normalize_fact_novel)
     BP_layerI_out = BP_layerI_out.squeeze()
-    BP_layerI_out_orig = BP_layerI_out.clone()
-
-
     BP_layerI_out[BP_layerI_out < 0] = 0
 
-    l1_plt = l1_act.view(1, -1).squeeze().cpu()
-    l1_act_tr_plt = l1_act_tr.view(1, -1).squeeze().cpu()
 
-    BP_layerI_out_plt = BP_layerI_out.view(1, -1).squeeze().cpu()
-    BP_layerI_out_orig_plt = BP_layerI_out_orig.view(1, -1).squeeze().cpu()
-    BPRep_plt =BPRep.view(1,-1).squeeze().cpu()
-
-    plt.figure()
-    plt.subplot(151)
-    plt.hist(l1_plt, 100)
-    plt.xlim(-10, 10)
-    plt.subplot(152)
-    plt.hist(l1_act_tr_plt, 100)
-    plt.xlim(-10,10)
-    plt.subplot(153)
-    plt.hist(BPRep_plt, 100)
-    plt.subplot(154)
-    plt.hist(BP_layerI_out_orig_plt, 100)
-    plt.ylabel('L1 after BP')
-    plt.subplot(155)
-    plt.hist(BP_layerI_out_plt, 100)
-
-
-    # reconstruct directly from activation
+    # reconstruct directly from activation without being stored in BP
     recon_layer1_skip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(l1_act, l2_act, 1, 'skip')
     
-    # reconstruct directly from layer 1 skip
+    # reconstruct directly from layer 1 skip after stored in BP
     BP_layer1_skip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(BP_layerI_out,BP_layer2_out,1, 'skip')
 
     # reconstruct directly from layer 1 noskip  (i.e. through the bottleneck)
@@ -307,9 +283,7 @@ if Fig2bFlag==1:
         )
 
 
-####this part of the code is token-related####################
-
-#####################################Figure 2c #########################################################################3
+#####################################Figure 2c (This part is token-related) #########################################################################3
 if Fig2cFlag ==1 :
     print('generating Figure 2c. Storing and retrieving multiple items')
     
@@ -330,6 +304,7 @@ if Fig2cFlag ==1 :
     l1_act, l2_act, shape_act, color_act = activations(imgs)
 
     for n in range(1,5):
+        #activations after shape/color map was stored in the BP
         shape_out_all, color_out_all, l2_out_all, l1_out_all = BPTokens(bpsize, bpPortion, shape_coeff, color_coeff,l1_coeff,l2_coeff,
                                                                         shape_act, color_act, l1_act, l2_act,
                                                                         n, 0, normalize_fact_familiar)
@@ -347,11 +322,11 @@ if Tab2Flag ==1:
 
     setSizes=[1,2,3,4] #number of tokens
    
-
-    familiar_corr_all=list()
-    familiar_corr_all_se=list()
+    #list of correlation values and standard errors for each set size
+    familiar_corr_all=list()  
+    familiar_corr_all_se=list() 
     novel_corr_all=list()
-    novel_corr_all_se=list()
+    novel_corr_all_se=list()  
 
     familiar_skip_all=list()
     familiar_skip_all_se=list()
@@ -364,8 +339,9 @@ if Tab2Flag ==1:
 
 
     for numItems in setSizes:
-
-        familiar_corr_models = list()
+        
+        #list of correlation values across models
+        familiar_corr_models = list()  
         novel_corr_models = list()
         familiar_skip_models=list()
         novel_BN_models=list()
@@ -382,28 +358,30 @@ if Tab2Flag ==1:
                                                               num_workers=nw)
 
             # This function is in tokens_capacity.py
-
+            
+            #correlation of familiar items as a function of set size when shape/color maps are stored
             familiar_corrValues= storeretrieve_crosscorrelation_test(numItems, perms, bpsize, bpPortion, shape_coeff,
                                                                         color_coeff,
                                                                         normalize_fact_familiar,
                                                                         normalize_fact_novel, modelNumber,
                                                                         test_loader_smaller, 'fam', 0,1)
-
+            #correlation of familiar items as a function of set size when L1 is stored and items are retrived via the skip
             familiar_corrValues_skip = storeretrieve_crosscorrelation_test(numItems, perms, bpsize, bpPortion, shape_coeff,
                                                                       color_coeff,
                                                                       normalize_fact_familiar,
                                                                       normalize_fact_novel, modelNumber,
                                                                       test_loader_smaller, 'fam', 1, 1)
 
-
+            #correlation of novel items as a function of set size when L1 is tored and items are retrived via skip
             novel_corrValues = storeretrieve_crosscorrelation_test(numItems, perms, bpsize,
                                                                                              bpPortion, shape_coeff,
                                                                                              color_coeff,
                                                                                              normalize_fact_familiar,
                                                                                              normalize_fact_novel,
                                                                                              modelNumber,
-                                                                                             test_loader_smaller, 'nov',
-                                                                                             1,1)
+                                                                                             test_loader_smaller, 'nov', 1,1)
+            
+            #correlation of novel items as a function of set size when shape/color maps are stored                                                                                            
             novel_corrValues_BN = storeretrieve_crosscorrelation_test(numItems, perms, bpsize,
                                                                    bpPortion, shape_coeff,
                                                                    color_coeff,
@@ -413,7 +391,7 @@ if Tab2Flag ==1:
                                                                    test_loader_smaller, 'nov',
                                                                    0, 1)
 
-
+            #correlation values across models
             familiar_corr_models.append(familiar_corrValues)
             familiar_skip_models.append(familiar_corrValues_skip)
             novel_corr_models.append(novel_corrValues)
@@ -431,7 +409,7 @@ if Tab2Flag ==1:
 
 
 
-
+        #correlation values for each set size + the corresponding standard errors
         familiar_corr_all.append(np.mean(familiar_corr_models_all))
         familiar_corr_all_se.append(np.std(familiar_corr_models_all)/math.sqrt(numModels))
 
@@ -445,23 +423,25 @@ if Tab2Flag ==1:
         novel_BN_all.append(np.mean(novel_BN_models_all))
         novel_BN_all_se.append(np.std(novel_BN_models_all)/math.sqrt(numModels))
 
-    #the mean correlation value between input and recontructed images for familiar and novel stimuli
+    #the mean correlation value between input and recontructed images for familiar items (stored and retrived from shape/color maps)
     outputFile.write('Familiar correlation\n')
     for i in range(len(setSizes)):
         outputFile.write('SS {0} Corr  {1:.3g}   SE  {2:.3g}\n'.format(setSizes[i],familiar_corr_all[i],familiar_corr_all_se[i]))
 
 
-
+    #the mean correlation value between input and recontructed images for novel items (stored L1, retrived via skip)
     outputFile.write('\nfNovel correlation\n')
     for i in range(len(setSizes)):
         outputFile.write(
             'SS {0} Corr  {1:.3g}   SE {2:.3g}\n'.format(setSizes[i], novel_corr_all[i], novel_corr_all_se[i]))
 
+    #the mean correlation value between input and recontructed images for familiar items (stored L1, retrived via akip)
     outputFile.write('\nfamiliar correlation vis skip \n')
     for i in range(len(setSizes)):
         outputFile.write(
             'SS {0} Corr  {1:.3g}   SE {2:.3g}\n'.format(setSizes[i], familiar_skip_all[i], familiar_skip_all_se[i]))
-
+    
+    #the mean correlation value between input and recontructed images for novel items (stored and retrived from shape/color maps)
     outputFile.write('\nnovel correlation via BN \n')
     for i in range(len(setSizes)):
         outputFile.write(
@@ -482,6 +462,7 @@ if Tab2Flag ==1:
     plt.show()
 
 #############################################
+#comparing the cross correlation between items and their reconstructions when stored into memory vs. when they're not stored (this is not included in the paper)
 if latents_crossFlag ==1:
 
     numModels=10
@@ -489,9 +470,10 @@ if latents_crossFlag ==1:
     print('cross correlations for familiar items when reconstructed and when retrived from BN or L1+skip ')
 
     setSizes=[1,2,3,4] #number of tokens
-   
-    noskip_recon_mean=list()
-    noskip_recon_se=list()
+    
+    #list of mean correlation values and standard errors for each set size
+    noskip_recon_mean=list() 
+    noskip_recon_se=list()   
     noskip_ret_mean=list()
     noskip_ret_se=list()
 
@@ -504,8 +486,9 @@ if latents_crossFlag ==1:
     perms = bigpermnum #number of times it repeats storing/retrieval
 
     for numItems in setSizes:
-
-        noskip_Reconmodels=list()
+        
+        #list of correlation values across models
+        noskip_Reconmodels=list() 
         noskip_Retmodels=list()
 
         skip_Reconmodels=list()
@@ -565,7 +548,7 @@ if latents_crossFlag ==1:
 
 
 
-
+        #reconstructions and retrievals: mean cross correlation between items and their recons/retrivelas 
         noskip_recon_mean.append(np.mean(noskip_Reconmodels_all))
         noskip_recon_se.append(np.std(noskip_Reconmodels_all)/math.sqrt(numModels))
 
@@ -617,9 +600,7 @@ if latents_crossFlag ==1:
 
     plt.show()
 
-
-
-########################  Ability to extract the correct token from a shape-only stimulus
+########################  Ability to extract the correct token from a shape-only stimulus######################
 
 if bindingtestFlag ==1:
     numModels=10
@@ -635,25 +616,21 @@ if bindingtestFlag ==1:
         
         
         print('testing binding cue retrieval')
+               
+        bs_testing = 2 
         
-        
-
-        # grey shape cue binding accuracy for only two items when the items are the same (e.g. two 3's ).
-
-        
-        bs_testing = 2
+         # grey shape cue binding accuracy for only two items when the two items are the same (this funcyion is in Tokens_cpapacity.py)
         correctToken[modelNumber-1],accuracyColor[modelNumber-1],accuracyShape[modelNumber-1] = binding_cue(bs_testing, perms, bpsize, bpPortion, shape_coeff, color_coeff, 'same',
                                                 modelNumber)
 
 
-        # grey shape cue binding accuracy for only two items when the two items are different
+        # grey shape cue binding accuracy for only two items when the two items are different (this funcyion is in Tokens_cpapacity.py)
         correctToken_diff[modelNumber-1],accuracyColor_diff[modelNumber-1] ,accuracyShape_diff[modelNumber-1] = binding_cue(bs_testing, perms, bpsize, bpPortion, shape_coeff, color_coeff
                                                          , 'diff', modelNumber)
         
-      
+    #retriveing correct token + correct shape +correct color  
     correctToekn_all= correctToken.mean()
     SD=correctToken.std()
-    
     correctToekn_diff_all=correctToken_diff.mean()
     SD_diff=correctToken_diff.std()
     accuracyColor_all=accuracyColor.mean()
@@ -681,16 +658,9 @@ if bindingtestFlag ==1:
 
 
 
-
-else:
-    print('skipping binding test')
-
-
-
-
-
-
 #############Table 1 for the no memmory condition#####################
+
+#Disentanglemenat of shape and color without storing in memory using classifier accuracies
 numModels = 10
 
 perms=hugepermnum
@@ -717,6 +687,7 @@ if Tab1Flag_noencoding == 1:
         clf_colorC = load('output{num}/cc{num}.joblib'.format(num=modelNumber))
         clf_colorS = load('output{num}/cs{num}.joblib'.format(num=modelNumber))
         
+        #testing the classifiers accuracy on shape/color disentanglement across 10 models and "rep" number of binding pools
         for rep in range(0,perms):
 
            pred_cc, pred_cs, CCreport[rep,modelNumber - 1], CSreport[rep,modelNumber - 1] = classifier_color_test('noskip',
@@ -726,7 +697,7 @@ if Tab1Flag_noencoding == 1:
            pred_ss, pred_sc, SSreport[rep,modelNumber-1], SCreport[rep,modelNumber-1] = classifier_shape_test('noskip', clf_shapeS, clf_shapeC)
            
      
-    print(CCreport)
+   
     CCreport=CCreport.reshape(1,-1)
     CSreport=CSreport.reshape(1,-1)
     SSreport=SSreport.reshape(1,-1)
@@ -739,6 +710,7 @@ if Tab1Flag_noencoding == 1:
 
 ########################## Table 1 for memory conditions ######################################################################
 
+#testing the classifiers accuracy for shape/color maps when ONE ITEM is stored in the BP
 if Tab1Flag == 1:
     numModels=10
     perms=10
@@ -822,7 +794,7 @@ if Tab1Flag == 1:
                                                                                         normalize_fact_familiar)
 
            # Table 1: classifier accuracy for shape and color for memory retrievals
-            print('classifiers accuracy for memory retrievals of BN_both for Table 2')
+            
             pred_ss, pred_sc, SSreport_both[rep,modelNumber-1], SCreport_both[rep,modelNumber-1] = classifier_shapemap_test_imgs(shape_out_BP_both, shapelabels,
                                                                              colorlabels, bs_testing, clf_shapeS,
                                                                              clf_shapeC)
@@ -832,7 +804,8 @@ if Tab1Flag == 1:
         
 
             # Table 1: classifier accuracy for shape and color for memory retrievals
-            print('classifiers accuracy for memory retrievals of BN_shapeonly for Table 2')
+          
+            #classifiers accuracy for memory retrievals of BN_shapeonly for Table 1
             pred_ss, pred_sc, SSreport_shape[rep,modelNumber - 1], SCreport_shape[
             rep,modelNumber - 1] = classifier_shapemap_test_imgs(shape_out_BP_shapeonly, shapelabels,
                                                              colorlabels,
@@ -842,7 +815,7 @@ if Tab1Flag == 1:
                                                              colorlabels,
                                                              bs_testing, clf_colorC, clf_colorS)
 
-            print('classifiers accuracy for memory retrievals of BN_coloronly for Table 2')
+            #classifiers accuracy for memory retrievals of BN_coloronly for Table 1
             pred_ss, pred_sc, SSreport_color[rep,modelNumber - 1], SCreport_color[
             rep,modelNumber - 1] = classifier_shapemap_test_imgs(shape_out_BP_coloronly, shapelabels,
                                                              colorlabels,
@@ -852,14 +825,15 @@ if Tab1Flag == 1:
                                                              colorlabels,
                                                              bs_testing, clf_colorC, clf_colorS)
 
-
+            # bp retrievals from layer 1
             BP_layer1_noskip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(BP_layerI_out,
                                                                                                 BP_layer2_out, 1,
-                                                                                                'noskip')  # bp retrievals from layer 1
+                                                                                                'noskip')  
             z_color = vae.sampling(mu_color, log_var_color).cuda()
             z_shape = vae.sampling(mu_shape, log_var_shape).cuda()
-            # Table 1 (memory retrievals from L1)
-            print('classifiers accuracy for L1 ')
+            
+           
+            #classifiers accuracy for L1 
             pred_ss, pred_sc, SSreport_l1[rep,modelNumber - 1], SCreport_l1[rep,modelNumber - 1] = classifier_shapemap_test_imgs(z_shape, shapelabels, colorlabels,
                                                                              bs_testing, clf_shapeS, clf_shapeC)
             pred_cc, pred_cs, CCreport_l1[rep,modelNumber - 1], CSreport_l1[rep,modelNumber - 1] = classifier_colormap_test_imgs(z_color, shapelabels, colorlabels,
@@ -871,26 +845,30 @@ if Tab1Flag == 1:
             z_color = vae.sampling(mu_color, log_var_color).cuda()
             z_shape = vae.sampling(mu_shape, log_var_shape).cuda()
 
-            # Table 1 (memory retrievals from L2)
-            print('classifiers accuracy for L2 ')
+            
+            #classifiers accuracy for L2
             pred_ss, pred_sc, SSreport_l2[rep,modelNumber - 1], SCreport_l2[rep,modelNumber - 1] = classifier_shapemap_test_imgs(z_shape, shapelabels, colorlabels,
                                                                              bs_testing, clf_shapeS, clf_shapeC)
             pred_cc, pred_cs, CCreport_l2[rep,modelNumber - 1], CSreport_l2[rep,modelNumber - 1] = classifier_colormap_test_imgs(z_color, shapelabels, colorlabels,
                                                                              bs_testing, clf_colorC, clf_colorS)
-    
+            
+    #classifiers accuracies for both shape and color, shape only, color only, L1 and L2
     SSreport_both=SSreport_both.reshape(1,-1)
     SSreport_both=SSreport_both.reshape(1,-1)
     SCreport_both=SCreport_both.reshape(1,-1)
     CCreport_both=CCreport_both.reshape(1,-1)
     CSreport_both=CSreport_both.reshape(1,-1)
+    
     SSreport_shape=SSreport_shape.reshape(1,-1)
     SCreport_shape=SCreport_shape.reshape(1,-1)
     CCreport_shape=CCreport_shape.reshape(1,-1)
     CSreport_shape=CSreport_shape.reshape(1,-1)
+    
     CCreport_color=CCreport_color.reshape(1,-1)
     CSreport_color=CSreport_color.reshape(1,-1)
     SSreport_color=SSreport_color.reshape(1,-1)
     SCreport_color=SCreport_color.reshape(1,-1)
+    
     SSreport_l1=SSreport_l1.reshape(1,-1)
     SCreport_l1=SCreport_l1.reshape(1,-1)
     CCreport_l1=CCreport_l1.reshape(1,-1)
@@ -902,7 +880,7 @@ if Tab1Flag == 1:
     CSreport_l2=CSreport_l2.reshape(1,-1)
         
             
-             
+   #mean classifiers accuracies across models and repetitions (each repetition generates a random BP)          
     outputFile.write(
         'Table 2 both shape and color, accuracy of SS {0:.4g} SE{1:.4g}, accuracy of SC {2:.4g} SE {3:.4g},\n accuracy of CC {4:.4g} SE {5:.4g}, accuracy of CS {6:.4g} SE {7:.4g}\n'.format(
             SSreport_both.mean(),
@@ -960,7 +938,7 @@ if Tab1Flag == 1:
 
 
 
-################################################ storing visual information (shape and color) along with the categorical label##########
+################################################ storing visual information (shape and color) along with the categorical label###################################
 
 if Tab1SuppFlag ==1:
 
@@ -980,29 +958,40 @@ if Tab1SuppFlag ==1:
 
     numModels=10
 
-
+    #list of classification accuracies (including SE) for shape and color labels when visual infromation and labels are stored together
     totalAccuracyShape = list()
     totalSEshape=list()
     totalAccuracyColor = list()
     totalSEcolor=list()
+    
+    #list of classification accuracies(including SE) for shape and color visual recons when only visual information is stored (no label)
     totalAccuracyShape_visual=list()
     totalSEshapeVisual=list()
     totalAccuracyColor_visual=list()
     totalSEcolorVisual=list()
+    
+    #list of classification accuracies (including SE) for shape and color visual recons when visual infromation and labels are stored together
     totalAccuracyShapeWlabels = list()
     totalSEshapeWlabels=list()
     totalAccuracyColorWlabels = list()
     totalSEcolorWlabels=list()
+    
+    
+    #list of classification accuracies (including SE) for shape and color visual recons when half of the visual infromation and labels are stored together
     totalAccuracyShape_half=list()
     totalSEshape_half=list()
     totalAccuracyColor_half=list()
     totalSEcolor_half=list()
+    
+    
+    #list of classification accuracies (including SE) for shape and color labels when only labels are stored
     totalAccuracyShape_cat=list()
     totalSEshape_cat=list()
     totalAccuracyColor_cat=list()
     totalSEcolor_cat=list()
     
-    shape_dotplots_models=list() #data for the dot plots
+    #this part was used to create the dot plots that we generated in another code in Panda
+    shape_dotplots_models=list() 
     color_dotplots_models=list()
     shapeVisual_dotplots_models=list()
     colorVisual_dotplots_models=list()
@@ -1019,7 +1008,7 @@ if Tab1SuppFlag ==1:
             test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=numItems, shuffle=True,
                                                               num_workers=0)
 
-
+            #list of mean accuracy across models
             accuracyShapeModels=list()
             accuracyColorModels=list()
             accuracyShapeWlabelsModels=list()
@@ -1041,7 +1030,6 @@ if Tab1SuppFlag ==1:
                 accuracyColor_visual=list()
                 accuracyShape_wlabels = list()
                 accuracyColor_wlabels = list()
-
                 accuracyShape_half = list()
                 accuracyColor_half = list()
                 accuracyShape_cat = list()
@@ -1080,18 +1068,20 @@ if Tab1SuppFlag ==1:
                                                                        clf_shapeS, clf_shapeC)
                     colorpred, x, y, z = classifier_colormap_test_imgs(color_act, shapelabels, colorlabels, numItems,
                                                                        clf_colorC, clf_colorS)
+                    
                     # one hot coding of labels before storing into the BP
                     shape_onehot = F.one_hot(shapepred, num_classes=20)
                     shape_onehot = shape_onehot.float().cuda()
                     color_onehot = F.one_hot(colorpred, num_classes=10)
                     color_onehot = color_onehot.float().cuda()
+                    
                     #binding output when only maps are stored;  storeLabels=0
                     shape_out, color_out, L2_out, L1_out, shapelabel_junk, colorlabel_junk=BPTokens_with_labels(
                         bpsize, bpPortion, 0,shape_coeff, color_coeff, shape_act, color_act, l1_act, l2_act, shape_onehot,
                         color_onehot,
                         numItems, 0, normalize_fact_familiar)
 
-
+                    #this function is in mVAE
                     shapepredVisual, x, ssreportVisual, z = classifier_shapemap_test_imgs(shape_out, shapelabels, colorlabels,
                                                                               numItems,
                                                                               clf_shapeS, clf_shapeC)
@@ -1151,7 +1141,7 @@ if Tab1SuppFlag ==1:
                     accuracyColor_half.append(accuracy_color_half)
                     
                     
-                      # binding output that stores only labels with 0% visual information
+                    # binding output that stores only labels with 0% visual information
                     shape_out_all_cat, color_out_all_cat, l2_out_all_cat, l1_out_all_cat, shape_label_out_cat, color_label_out_cat = BPTokens_with_labels(
                         bpsize, bpPortion, 1, shape_coeff_cat, color_coeff_cat, shape_act, color_act, l1_act, l2_act,
                         shape_onehot,
@@ -1249,15 +1239,16 @@ if Tab1SuppFlag ==1:
 
     outputFile.write('Table 1S, accuracy of ShapeLabel')
  
-
+    #accuracy of retrieving lebals (stored: visual information +labels)
     for i in range(len(setSizes)):
         outputFile.write('\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyShape[i],totalSEshape[i] ))
-
+   
     outputFile.write('\n\nTable 3, accuracy of ColorLabel')
     for i in range(len(setSizes)):
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyColor[i], totalSEcolor[i]))
 
+    #accuracy of retrieving visual (stored: visual infromation only)
     outputFile.write('\n\nTable 3, accuracy of shape map with no labels')
     for i in range(len(setSizes)):
         outputFile.write(
@@ -1268,7 +1259,7 @@ if Tab1SuppFlag ==1:
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyColor_visual[i],
                                                                  totalSEcolorVisual[i]))
-
+    #accuracy of retriveing visual (stored: visual + labels)
     outputFile.write('\n\nTable 3, accuracy of shape map with labels')
     for i in range(len(setSizes)):
         outputFile.write(
@@ -1280,7 +1271,7 @@ if Tab1SuppFlag ==1:
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyColorWlabels[i],
                                                                  totalSEcolorWlabels[i]))
-
+    #accuracy of retriveing labels (stored: 50% visual + labels)
     outputFile.write('\n\nTable 3, accuracy of ShapeLabel for 50% visual')
     for i in range(len(setSizes)):
         outputFile.write(
@@ -1291,6 +1282,7 @@ if Tab1SuppFlag ==1:
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyColor_half[i], totalSEcolor_half[i]))
         
+    #accuracy of retriveing labels (stored: only labels)  
     outputFile.write('\n\nTable 3, accuracy of ShapeLabel for 0% visual')    
     for i in range(len(setSizes)):
         outputFile.write(
@@ -1302,7 +1294,7 @@ if Tab1SuppFlag ==1:
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyColor_cat[i], totalSEcolor_cat[i]))
 
 
-######This part is to detect whether a stimulus is novel or familiar
+######This part is to detect whether a stimulus is novel or familiar#################
 
 if noveltyDetectionFlag==1:
     
@@ -1310,23 +1302,24 @@ if noveltyDetectionFlag==1:
     perms=smallpermnum
     numModels=10
     
+    #accuracy of detecting a familiar vs novel item across different models and for "perms" number of binding pools (every time, a new BP with new sets of weights is generated)
     acc_fam=torch.zeros(numModels,perms)
     acc_nov=torch.zeros(numModels,perms)
     
     for modelNumber in range (1,numModels+1):
         
+        #this function is in tokens_capacity.py
         acc_fam[modelNumber-1,:], acc_nov[modelNumber-1,:]= novelty_detect( perms, bpsize, bpPortion, shape_coeff, color_coeff, normalize_fact_familiar,
                   normalize_fact_novel, modelNumber, test_loader_smaller)
+        
+    #mean accuracy of detecting whether the stimulus is novel or familiar
     mean_fam=acc_fam.view(1,-1).mean()
     fam_SE= acc_fam.view(1,-1).std()/(len(acc_fam.view(1,-1)))
     
     mean_nov=acc_nov.view(1,-1).mean()
     nov_SE= acc_nov.view(1,-1).std()/(len(acc_nov.view(1,-1)))
     
-    
-    
-    
-    
+       
     outputFile.write(
             '\accuracy of detecting the familiar shapes : mean is {0:.4g} and SE is {1:.4g} '.format(mean_fam, fam_SE))
     
