@@ -11,7 +11,7 @@ colornames = ["red", "blue", "green", "purple", "yellow", "cyan", "orange", "bro
 # and the VAE bottleneck is split, having two different maps
 # one is trained with a loss function for color only (eliminating all shape info, reserving only the brightest color)
 # the other is trained with a loss function for shape only
-#
+
 
 # prerequisites
 import torch
@@ -40,7 +40,7 @@ import copy
 
 global colorlabels
 
-
+#generating a large vector of color labels
 colorlabels = np.random.randint(0, 10, 1000000)
 colorrange = .1
 colorvals = [
@@ -83,37 +83,8 @@ def image_loader(image_name):
     return image.to(device, torch.float)
 
 
-def Colorize_func_secret(img,npflag = 0):
-    global numcolors,colorlabels  # necessary because we will be modifying this counter variable
-
-    thiscolor = colorlabels[numcolors]  # what base color is this?
-    thiscolor = np.random.randint(10)
-
-    rgb = colorvals[thiscolor];  # grab the rgb for this base color
-      # increment the index
-
-    r_color = rgb[0] + np.random.uniform() * colorrange * 2 - colorrange  # generate a color randomly in the neighborhood of the base color
-    g_color = rgb[1] + np.random.uniform() * colorrange * 2 - colorrange
-    b_color = rgb[2] + np.random.uniform() * colorrange * 2 - colorrange
-
-    #img = img.convert('L')
-
-    np_img = np.array(img, dtype=np.uint8)
-    np_img = np.dstack([np_img * r_color, np_img * g_color, np_img * b_color])
-    backup = np_img
-    np_img = np_img.astype(np.uint8)
-    np_img[0,0,0] = thiscolor   #secretely embed the color label inside
-        #this is a temporary fix
-    #print(np_img[0,0,0])
-    #print(numcolors)
-    img = Image.fromarray(np_img, 'RGB')
-    if npflag ==1:
-        img = backup
-
-    return img
-
-def Colorize_func(img):
-    global numcolors,colorlabels  
+def Colorize_func(img): 
+    global numcolors,colorlabels    # necessary because we will be modifying this counter variable
 
     thiscolor = colorlabels[numcolors]  # what base color is this?
 
@@ -134,6 +105,35 @@ def Colorize_func(img):
 
     return img
 
+
+#the secret function will be used for testing the classifiers (it has fix color labels)
+def Colorize_func_secret(img,npflag = 0):
+    global numcolors,colorlabels  
+    
+    thiscolor = colorlabels[numcolors]  
+    thiscolor = np.random.randint(10)
+
+    rgb = colorvals[thiscolor];  
+      # increment the index
+
+    r_color = rgb[0] + np.random.uniform() * colorrange * 2 - colorrange  
+    g_color = rgb[1] + np.random.uniform() * colorrange * 2 - colorrange
+    b_color = rgb[2] + np.random.uniform() * colorrange * 2 - colorrange
+
+    np_img = np.array(img, dtype=np.uint8)
+    np_img = np.dstack([np_img * r_color, np_img * g_color, np_img * b_color])
+    backup = np_img
+    np_img = np_img.astype(np.uint8)
+    
+    np_img[0,0,0] = thiscolor   #secretely embed the color label inside
+    img = Image.fromarray(np_img, 'RGB')
+    if npflag ==1:
+        img = backup
+
+    return img
+
+
+
 #to choose a specific class in case is necessary
 def data_filter (data_type, selected_labels):
   data_trans= copy.deepcopy(data_type)
@@ -144,8 +144,8 @@ def data_filter (data_type, selected_labels):
   data_trans.data = data_type.data[idx_selected]
   return data_trans
 
-def thecolorlabels(datatype):
-    
+#to extract the color labels
+def thecolorlabels(datatype):    
     colornumstart = 0
     coloridx = range(colornumstart, len(datatype))
     labelscolor = colorlabels[coloridx]
@@ -169,7 +169,7 @@ ftest_dataset = datasets.FashionMNIST(root='./fashionmnist_data/', train=False,
                                       download=False)
 
 train_mnist_labels= train_dataset_MNIST.targets
-ftrain_dataset.targets=ftrain_dataset.targets+ 10
+ftrain_dataset.targets=ftrain_dataset.targets+ 10 #adding 10 to each f-mnist dataset label to make it distinguishable from mnist
 train_fmnist_labels=ftrain_dataset.targets
 
 test_mnist_labels= test_dataset_MNIST.targets
@@ -186,7 +186,6 @@ train_skip_fmnist= datasets.FashionMNIST(root='./fashionmnist_data/', train=True
 
 
 train_dataset_skip= torch.utils.data.ConcatDataset((train_skip_mnist ,train_skip_fmnist)) #training skip connection with all images
-#test_dataset_skip= torch.utils.data.ConcatDataset((test_dataset_MNIST ,test_skip_fmnist))
 
 train_dataset = torch.utils.data.ConcatDataset((train_dataset_MNIST ,ftrain_dataset))
 test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST ,ftest_dataset))
@@ -197,7 +196,7 @@ test_loader_noSkip = torch.utils.data.DataLoader(dataset=test_dataset, batch_siz
 test_loader_skip = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs, shuffle=False,  drop_last=True,num_workers=nw)
 
 
-#train and test the classifiers on MNIST and f-MNIST
+#train and test the classifiers on MNIST and f-MNIST (the batch size that contains all the images)
 bs_tr=120000
 bs_te=20000
 
@@ -210,19 +209,21 @@ class VAE(nn.Module):
     def __init__(self, x_dim, h_dim1, h_dim2, z_dim):
         super(VAE, self).__init__()
 
-        # encoder part
+        #encoder part
         self.fc1 = nn.Linear(x_dim, h_dim1)
         self.fc2 = nn.Linear(h_dim1, h_dim2)
         self.fc31 = nn.Linear(h_dim2, z_dim)  # shape
         self.fc32 = nn.Linear(h_dim2, z_dim)
         self.fc33 = nn.Linear(h_dim2, z_dim)  # color
         self.fc34 = nn.Linear(h_dim2, z_dim)
+        
         #decoder part
         self.fc4s = nn.Linear(z_dim, h_dim2)  # shape
         self.fc4c = nn.Linear(z_dim, h_dim2)  # color
         self.fc5 = nn.Linear(h_dim2, h_dim1)
         self.fc6 = nn.Linear(h_dim1, x_dim)
-
+        
+        #skip connection
         self.fc7 = nn.Linear(h_dim1, h_dim1)
 
     def encoder(self, x):
@@ -282,11 +283,11 @@ class VAE(nn.Module):
             z_color = self.sampling(mu_color, log_var_color)
 
         if (whichdecode == 'all'):
-            output = self.decoder_all(z_shape, z_color, hskip)
+            output = self.decoder_all(z_shape, z_color, hskip)  #decodes via skip and noskip
         elif (whichdecode == 'skip'):
-            output = self.decoder_skip(z_shape, z_color, hskip)
+            output = self.decoder_skip(z_shape, z_color, hskip) #decodes only via skip
         else:
-            output = self.decoder_noskip(z_shape, z_color, hskip)
+            output = self.decoder_noskip(z_shape, z_color, hskip) #decodes via noskip
 
         return output, mu_color, log_var_color, mu_shape, log_var_shape
 
@@ -343,6 +344,7 @@ def loss_function(recon_x, x, mu, log_var, mu_c, log_var_c):
     return BCE 
 
 
+#loss function for shape map
 def loss_function_shape(recon_x, x, mu, log_var):
     # make grayscale reconstruction
     grayrecon = recon_x.view(bs, 3, 28, 28).mean(1)
@@ -353,7 +355,7 @@ def loss_function_shape(recon_x, x, mu, log_var):
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
     return BCEGray + KLD
 
-
+#loss function for color map
 def loss_function_color(recon_x, x, mu, log_var):
     # make color-only (no shape) reconstruction and use that as the loss function
     recon = recon_x.clone().view(bs, 3, 784)
@@ -586,11 +588,11 @@ def BP(bp_outdim, l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff
             BP_layerI_out = (BP_layerI_out / bp_outdim ) * normalize_fact
             BP_layer2_out = BP_layer2_out / bp_outdim
 
-#
+
         return BP_L1_each, shape_out_BP, color_out_BP, BP_layerI_out, BP_layer2_out
 
 
-
+#binidng pool for 1 items and more
 def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, shape_act, color_act,l1_act,l2_act, bs_testing, layernum, normalize_fact ):
     # Store and retrieve multiple items in the binding pool
     # bp_outdim:  size of binding pool
@@ -616,15 +618,15 @@ def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, sh
                                     bp_in_color_dim).cuda()  # will be used to accumulate the reconstructed colors
         L1_out_all = torch.zeros(bs_testing, bp_in_L1_dim).cuda()
         L2_out_all = torch.zeros(bs_testing, bp_in_L2_dim).cuda()
-
-        shape_fw = torch.randn(bp_in_shape_dim,
-                               bp_outdim).cuda()  # make the randomized fixed weights to the binding pool
+        
+        # make the randomized fixed weights to the binding pool
+        shape_fw = torch.randn(bp_in_shape_dim,bp_outdim).cuda()                                
         color_fw = torch.randn(bp_in_color_dim, bp_outdim).cuda()
         L1_fw = torch.randn(bp_in_L1_dim, bp_outdim).cuda()
         L2_fw = torch.randn(bp_in_L2_dim, bp_outdim).cuda()
 
         # ENCODING!  Store each item in the binding pool
-        for items in range(bs_testing):  # the number of images
+        for items in range(bs_testing):  # the number of images being stored
             tkLink_tot = torch.randperm(bp_outdim)  # for each token figure out which connections will be set to 0
             notLink = tkLink_tot[bpPortion:]  # list of 0'd BPs for this token
 
@@ -643,7 +645,6 @@ def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, sh
         BP_in_items = torch.stack(BP_in_all)
         BP_in_items = torch.squeeze(BP_in_items, 1)
         BP_in_items = torch.sum(BP_in_items, 0).view(1, -1)  # divide by the token percent, as a normalizing factor
-
         BP_in_items = BP_in_items.repeat(bs_testing, 1)  # repeat the matrix to the number of items to easier retrieve
         notLink_all = torch.stack(notLink_all)  # this is the set of 0'd connections for each of the tokens
 
@@ -656,7 +657,7 @@ def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, sh
             if layernum==2:
 
                 L2_out_eachimg = torch.mm(BP_in_items[items, :].view(1, -1),L2_fw.t()).cuda()  # do the actual reconstruction
-                L2_out_all[items, :] = L2_out_eachimg / bpPortion  #
+                L2_out_all[items, :] = L2_out_eachimg / bpPortion  # put the reconstructions into a bit tensor and then normalize by the effective # of BP nodes
             else:
                 shape_out_eachimg = torch.mm(BP_in_items[items, :].view(1, -1),shape_fw.t()).cuda()  # do the actual reconstruction
                 color_out_eachimg = torch.mm(BP_in_items[items, :].view(1, -1), color_fw.t()).cuda()
@@ -666,7 +667,7 @@ def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, sh
     return shape_out_all, color_out_all, L2_out_all, L1_out_all
 
 
-
+#binding pool that stores images along with labels
 def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coef, shape_act, color_act,l1_act,l2_act,oneHotShape, oneHotcolor, bs_testing, layernum, normalize_fact ):
     # Store and retrieve multiple items including labels in the binding pool 
     # bp_outdim:  size of binding pool
@@ -691,15 +692,16 @@ def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coe
         bp_in_Slabels_dim = oneHotShape.shape[1]  # dim =20
         bp_in_Clabels_dim= oneHotcolor.shape[1]
 
-
-        shape_out_all = torch.zeros(bs_testing,bp_in_shape_dim).cuda()  # will be used to accumulate the reconstructed shapes
-        color_out_all = torch.zeros(bs_testing,bp_in_color_dim).cuda()  # will be used to accumulate the reconstructed colors
+        # will be used to accumulate the reconstructions
+        shape_out_all = torch.zeros(bs_testing,bp_in_shape_dim).cuda()  
+        color_out_all = torch.zeros(bs_testing,bp_in_color_dim).cuda()  
         L1_out_all = torch.zeros(bs_testing, bp_in_L1_dim).cuda()
         L2_out_all = torch.zeros(bs_testing, bp_in_L2_dim).cuda()
         shape_label_out=torch.zeros(bs_testing, bp_in_Slabels_dim).cuda()
         color_label_out = torch.zeros(bs_testing, bp_in_Clabels_dim).cuda()
-
-        shape_fw = torch.randn(bp_in_shape_dim, bp_outdim).cuda()  # make the randomized fixed weights to the binding pool
+        
+        #make the randomized fixed weights to the binding pool
+        shape_fw = torch.randn(bp_in_shape_dim, bp_outdim).cuda()  
         color_fw = torch.randn(bp_in_color_dim, bp_outdim).cuda()
         L1_fw = torch.randn(bp_in_L1_dim, bp_outdim).cuda()
         L2_fw = torch.randn(bp_in_L2_dim, bp_outdim).cuda()
@@ -766,9 +768,9 @@ def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coe
 
     return shape_out_all, color_out_all, L2_out_all, L1_out_all,shape_label_out,color_label_out
 
-
+#Store multiple items in the binding pool, then try to retrieve the token of item #1 using its shape as a cue
 def BPTokens_binding_all(bp_outdim,  bpPortion, shape_coef,color_coef,shape_act,color_act,l1_act,bs_testing,layernum, shape_act_grey, color_act_grey):
-    #Store multiple items in the binding pool, then try to retrieve the token of item #1 using its shape as a cue
+    
     # bp_outdim:  size of binding pool
     # bpPortion:  number of binding pool units per token
     # shape_coef:  weight for storing shape information
@@ -985,25 +987,19 @@ def classifier_shapemap_test_imgs(shape, shapelabels, colorlabels,numImg, clf_sh
 
 #testing on color for multiple images stored in memory
 def classifier_colormap_test_imgs(color, shapelabels, colorlabels,numImg, clf_colorC, clf_colorS,verbose = 0):
-
     
     numImg = int(numImg)
-
-
     with torch.no_grad():
       
         color = torch.squeeze(color, dim=1)
         color = color.cuda()
         test_colorlabels = thecolorlabels(test_dataset)
 
-
         pred_ccimg = torch.tensor(clf_colorC.predict(color.cpu()))
         pred_csimg = torch.tensor(clf_colorS.predict(color.cpu()))
 
-
         CCreport = torch.eq(colorlabels[0:numImg].cpu(), pred_ccimg).sum().float() / len(pred_ccimg)
         CSreport = torch.eq(shapelabels.cpu(), pred_csimg).sum().float() / len(pred_csimg)
-
 
         if verbose == 1:
             print('----*************---------color classification from color map')
