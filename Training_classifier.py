@@ -1,11 +1,5 @@
 colornames = ["red", "blue","green","purple","yellow","cyan","orange","brown","pink","teal"]
-#specified in "colorvals" variable below
 
-#also there is a skip connection from the first layer to the last layer to enable reconstructions of new stimuli
-#and the VAE bottleneck is split, having two different maps
-#one is trained with a loss function for color only (eliminating all shape info, reserving only the brightest color)
-#the other is trained with a loss function for shape only
-#
 
 # prerequisites
 import glob, os
@@ -25,7 +19,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 import config 
 from IPython.display import Image, display
 import pickle
-#import cv2
+import cv2
 
 config.init()
 
@@ -49,6 +43,7 @@ for outs in range(1,11):
     print('Training two classifiers based on color')
     numcolors = 0
     classifier_shape_train('noskip')
+    #save the classifiers in the corresponding folder
     dump(clf_sc, 'output{num}/sc{num}.joblib'.format(num=outs))
     dump(clf_ss, 'output{num}/ss{num}.joblib'.format(num=outs))
     numcolors = 0
