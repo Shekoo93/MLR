@@ -1,10 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Mar 11 16:04:16 2020
 
-@author: brad
-"""
 # prerequisites
 import torch
 import numpy as np
@@ -44,8 +38,6 @@ numcolors = 0
 
 for epoch in range(1, 201):
     
-    print(numcolors)
-    #modified to include color labels
     train(epoch,'iterated')
     colorlabels = np.random.randint(0,10,100000)#regenerate the list of color labels at the start of each test epoch
     numcolors = 0
