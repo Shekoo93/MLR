@@ -331,47 +331,7 @@ def novelty_detect( perms, bpsize, bpPortion, shape_coeff, color_coeff, normaliz
         acc_fam[rep]=sum(acc_fam_br).item()/len(images_fam)
         
        
-        #now retrive the novel and familiar shapes (this part is optional)
-        images_nov_ret=imgs[idx_nov,:]
-        images_nov_ret=images_nov_ret.squeeze()
-        
-        images_fam_ret=imgs[idx_fam,:]
-        images_fam_ret=images_fam_ret.squeeze()
-        
-        
-        #layer activations of novel stimuli
-        l1_act_nov, l2_act_nov, shape_act_nov, color_act_nov = activations(images_nov_ret)
-        
-        l1_act_tr=l1_act_nov.clone()
-        l1_act_tr[l1_act_nov != 0] = l1_act_tr[l1_act_nov != 0] + 2
-        l1_act_tr[l1_act_tr == 0] = -3
-        
-        #layer activations of familiar stimuli
-        l1_act_fam, l2_act_fam, shape_act_fam, color_act_fam = activations(images_fam_ret)
-        
-       
-        for stims in range(images_nov_ret.shape[0]):
-        
-          #store a novel shape in memory        
-           shape_out_all, color_out_all, l2_out_all, l1_out_all = BPTokens(bpsize, bpPortion, shape_coeff,
-                                                                                color_coeff,
-                                                                                l1_coeff, l2_coeff,
-                                                                                shape_act_nov, color_act_nov, l1_act_tr[stims].view(1,-1), l2_act_nov,
-                                                                                setSize, 1, normalize_fact_familiar)
-           l1_out_all[l1_out_all < 0] = 0
- 
-           retrievals_nov, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(l1_out_all, l2_act_nov,
-                                                                                                  1,'skip')
-          
-          #store a familiar shape in memory
-           shape_out, color_out, l2_out, l1_out = BPTokens(bpsize, bpPortion, shape_coeff,
-                                                                                color_coeff,
-                                                                                l1_coeff, l2_coeff,
-                                                                                shape_act_fam[stims].view(1,-1), color_act_fam[stims].view(1,-1), l1_act_fam, l2_act_fam,
-                                                                                setSize, 0, normalize_fact_familiar)
-           retrievals_fam = vae.decoder_noskip(shape_out, color_out, 0).cuda()
-           
-           
+      
            
     return acc_fam, acc_nov
   
