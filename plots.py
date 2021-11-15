@@ -252,7 +252,7 @@ if Fig2bFlag==1:
     #increasing the difference between positive and zero-level activations in L1 using the follwoing transformation:
     l1_act, l2_act, shape_act, color_act = activations(imgs)
     l1_act_tr = l1_act.clone()
-    l1_act_tr[l1_act!=0] = l1_act_tr[l1_act!=0] + 1
+    l1_act_tr[l1_act!=0] = l1_act_tr[l1_act!=0] + 2
     l1_act_tr[l1_act_tr == 0] = -3
 
 
