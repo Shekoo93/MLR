@@ -80,7 +80,7 @@ token_overlap = .4
 bpPortion = int(token_overlap *bpsize) # number binding pool neurons used for each item
 
 normalize_fact_familiar=1
-normalize_fact_novel=0.8
+normalize_fact_novel=1
 all_imgs = []
 
 #number of repetions for statistical inference
