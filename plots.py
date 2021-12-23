@@ -12,7 +12,6 @@ colornames = ["red", "blue","green","purple","yellow","cyan","orange","brown","p
 #one is trained with a loss function for color only (eliminating all shape info, reserving only the brightest color)
 #the other is trained with a loss function for shape only
 
-
 # prerequisites
 import torch
 import numpy as np
@@ -135,18 +134,11 @@ if Fig1SuppFlag ==1:
         normalize=False,
         range=(-1, 1),
     )
- 
-
-
 ######################## Figure 2a #######################################################################################
 #store items using both features, and separately color and shape (memory retrievals)
-
-
 if Fig2aFlag==1:
     print('generating figure 2a, reconstructions from the binding pool')
-
     numimg= 6 #number of images to display in this figure
-
     numcolors = 0
     colorlabels = np.random.randint(0, 10, 100000)
     colorlabels = thecolorlabels(test_dataset)
@@ -160,7 +152,6 @@ if Fig2aFlag==1:
     #run them all through the encoder
     l1_act, l2_act, shape_act, color_act = activations(imgs)  #get activations from this small set of images
 
-
     #binding pool outputs
     BP_in, shape_out_BP_both, color_out_BP_both, BP_layerI_junk, BP_layer2_junk =            BP(bpPortion , l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff,l1_coeff,l2_coeff,normalize_fact_familiar)
     BP_in, shape_out_BP_shapeonly,  color_out_BP_shapeonly, BP_layerI_junk, BP_layer2_junk = BP(bpPortion , l1_act, l2_act, shape_act, color_act, shape_coeff, 0,0,0,normalize_fact_familiar)
@@ -168,13 +159,12 @@ if Fig2aFlag==1:
     BP_in,  shape_out_BP_junk, color_out_BP_junk, BP_layerI_out, BP_layer2_junk = BP(bpPortion , l1_act, l2_act, shape_act, color_act, 0, 0,l1_coeff,0,normalize_fact_familiar)
     BP_in,  shape_out_BP_junk, color_out_BP_junk, BP_layerI_junk, BP_layer2_out = BP(bpPortion , l1_act, l2_act, shape_act, color_act, 0, 0,0,l2_coeff,normalize_fact_familiar)
 
-
-
     #memory retrievals from Bottleneck storage
     bothRet = vae.decoder_noskip(shape_out_BP_both, color_out_BP_both, 0).cuda()  # memory retrieval from the bottleneck
     shapeRet = vae.decoder_shape(shape_out_BP_shapeonly, color_out_BP_shapeonly , 0).cuda()  #memory retrieval from the shape map
     colorRet = vae.decoder_color(shape_out_BP_coloronly, color_out_BP_coloronly, 0).cuda()  #memory retrieval from the color map
-
+    
+    #save images
     save_image(
         torch.cat([imgs[0: numimg].view(numimg, 3, 28, 28), bothRet[0: numimg].view(numimg, 3, 28, 28),
                    shapeRet[0: numimg].view(numimg, 3, 28, 28), colorRet[0: numimg].view(numimg, 3, 28, 28)], 0),
@@ -196,15 +186,10 @@ if Fig2aFlag==1:
         normalize=False,
         range=(-1, 1),
     )
-
- 
 ############################# Figure 2b#################################################################################
-
-
 if Fig2bFlag==1:
     print('generating Figure 2b, Novel characters retrieved from memory of L1 and Bottleneck')
-    
-    numimg = 6
+    numimg = 6   
     trans2 = transforms.ToTensor()
     
     #loads the novel stimuli (Bengali charachters)
@@ -218,7 +203,8 @@ if Fig2bFlag==1:
         all_imgs.append(image)
     all_imgs = torch.stack(all_imgs)
     imgs = all_imgs.view(-1, 3 * 28 * 28).cuda()
-
+    
+    #save images
     save_image(
             torch.cat([trans2(img_new).view(1, 3, 28, 28)], 0),
             'output{num}/figure10test.png'.format(num=modelNumber),
@@ -226,12 +212,12 @@ if Fig2bFlag==1:
             normalize=False,
             range=(-1, 1),
         )
+    
     #increasing the difference between positive and zero-level activations in L1 using the follwoing transformation:
     l1_act, l2_act, shape_act, color_act = activations(imgs)
     l1_act_tr = l1_act.clone()
     l1_act_tr[l1_act!=0] = l1_act_tr[l1_act!=0] + 2
     l1_act_tr[l1_act_tr == 0] = -3
-
 
     # BP outputs of L1, L2 shape and color maps
     BP_in, shape_out_BP, color_out_BP, BP_layerI_junk, BP_layer2_junk = BP(bpPortion, l1_act_tr, l2_act, shape_act, color_act, shape_coeff, color_coeff,0,0,normalize_fact_novel)
@@ -240,16 +226,16 @@ if Fig2bFlag==1:
     BP_layerI_out = BP_layerI_out.squeeze()
     BP_layerI_out[BP_layerI_out < 0] = 0
 
-
-    # reconstruct directly from activation without being stored in BP
+    #reconstruct directly from activation without being stored in BP
     recon_layer1_skip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(l1_act, l2_act, 1, 'skip')
     
-    # reconstruct directly from layer 1 skip after stored in BP
+    #reconstruct directly from layer 1 skip after stored in BP
     BP_layer1_skip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(BP_layerI_out,BP_layer2_out,1, 'skip')
 
-    # reconstruct directly from layer 1 noskip  (i.e. through the bottleneck)
+    #reconstruct directly from layer 1 noskip  (i.e. through the bottleneck)
     BP_layer1_noskip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(BP_layerI_out,BP_layer2_out, 1, 'noskip')
 
+    #save images
     save_image(
             torch.cat([imgs[0: numimg].view(numimg, 3, 28, 28), recon_layer1_skip[0: numimg].view(numimg, 3, 28, 28),
                        BP_layer1_skip[0: numimg].view(numimg, 3, 28, 28),BP_layer1_noskip[0: numimg].view(numimg, 3, 28, 28) ], 0),
@@ -258,8 +244,6 @@ if Fig2bFlag==1:
             normalize=False,
             range=(-1, 1),
         )
-
-
 #####################################Figure 2c (This part is token-related) #########################################################################3
 if Fig2cFlag ==1 :
     print('generating Figure 2c. Storing and retrieving multiple items')
@@ -277,9 +261,7 @@ if Fig2cFlag ==1 :
     images, labels = next(iter(test_loader_smaller))
     orig_imgs = images.view(-1, 3 * 28 * 28).cuda()
     imgs = orig_imgs.clone()
-
     l1_act, l2_act, shape_act, color_act = activations(imgs)
-
     for n in range(1,5):
         #activations after shape/color map was stored in the BP
         shape_out_all, color_out_all, l2_out_all, l1_out_all = BPTokens(bpsize, bpPortion, shape_coeff, color_coeff,l1_coeff,l2_coeff,
@@ -289,14 +271,11 @@ if Fig2cFlag ==1 :
         imgs = orig_imgs.clone()
         save_image(imgs[0: n].view(n, 3, 28, 28), 'output{num}/figure2coriginals{d}.png'.format(num=modelNumber,d=n))
         save_image(retrievals[0: n].view(n, 3, 28, 28), 'output{num}/figure2cretrieved{d}.png'.format(num=modelNumber,d=n))
-
 ###################Table 2##################################################
 if Tab2Flag ==1:
 
     numModels=10   
-
     print('Tab2 loss of quality of familiar vs novel items using correlation')
-
     setSizes=[1,2,3,4] #number of tokens
    
     #list of correlation values and standard errors for each set size
@@ -304,44 +283,35 @@ if Tab2Flag ==1:
     familiar_corr_all_se=list() 
     novel_corr_all=list()
     novel_corr_all_se=list()  
-
     familiar_skip_all=list()
     familiar_skip_all_se=list()
-
     novel_BN_all=list()
     novel_BN_all_se = list()
-
-    perms = bigpermnum#number of times it repeats storing/retrieval
-
-
-
+    
+    #number of times it repeats storing/retrieval
+    perms = bigpermnum
     for numItems in setSizes:
-        
         #list of correlation values across models
         familiar_corr_models = list()  
         novel_corr_models = list()
         familiar_skip_models=list()
         novel_BN_models=list()
-
         print('SetSize {num}'.format(num=numItems))
-
         for modelNumber in range(1, numModels + 1):  # which model should be run, this can be 1 through 10
-
             load_checkpoint(
                 'output{modelNumber}/checkpoint_threeloss_singlegrad200.pth'.format(modelNumber=modelNumber))
 
             # reset the data set for each set size
             test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=numItems, shuffle=True,
                                                               num_workers=nw)
-
-            # This function is in tokens_capacity.py
             
-            #correlation of familiar items as a function of set size when shape/color maps are stored
+            #correlation of familiar items as a function of set size when shape/color maps are stored (This function is in tokens_capacity.py)
             familiar_corrValues= storeretrieve_crosscorrelation_test(numItems, perms, bpsize, bpPortion, shape_coeff,
                                                                         color_coeff,
                                                                         normalize_fact_familiar,
                                                                         normalize_fact_novel, modelNumber,
                                                                         test_loader_smaller, 'fam', 0,1)
+            
             #correlation of familiar items as a function of set size when L1 is stored and items are retrived via the skip
             familiar_corrValues_skip = storeretrieve_crosscorrelation_test(numItems, perms, bpsize, bpPortion, shape_coeff,
                                                                       color_coeff,
@@ -373,30 +343,20 @@ if Tab2Flag ==1:
             familiar_skip_models.append(familiar_corrValues_skip)
             novel_corr_models.append(novel_corrValues)
             novel_BN_models.append(novel_corrValues_BN)
-
-
-
         
+        #reshaping the correlation values matrix
         familiar_corr_models_all=np.array(familiar_corr_models).reshape(-1,1)
         novel_corr_models_all = np.array(novel_corr_models).reshape(1, -1)
-
         familiar_skip_models_all=np.array(familiar_skip_models).reshape(1,-1)
         novel_BN_models_all=np.array(novel_BN_models).reshape(1,-1)
-
-
-
 
         #correlation values for each set size + the corresponding standard errors
         familiar_corr_all.append(np.mean(familiar_corr_models_all))
         familiar_corr_all_se.append(np.std(familiar_corr_models_all)/math.sqrt(numModels))
-
-
         novel_corr_all.append(np.mean( novel_corr_models_all))
         novel_corr_all_se.append(np.std(novel_corr_models_all)/math.sqrt(numModels))
-
         familiar_skip_all.append(np.mean(familiar_skip_models_all))
         familiar_skip_all_se.append(np.std(familiar_skip_models_all)/math.sqrt(numModels))
-
         novel_BN_all.append(np.mean(novel_BN_models_all))
         novel_BN_all_se.append(np.std(novel_BN_models_all)/math.sqrt(numModels))
 
@@ -404,7 +364,6 @@ if Tab2Flag ==1:
     outputFile.write('Familiar correlation\n')
     for i in range(len(setSizes)):
         outputFile.write('SS {0} Corr  {1:.3g}   SE  {2:.3g}\n'.format(setSizes[i],familiar_corr_all[i],familiar_corr_all_se[i]))
-
 
     #the mean correlation value between input and recontructed images for novel items (stored L1, retrived via skip)
     outputFile.write('\nfNovel correlation\n')
@@ -437,7 +396,6 @@ if Tab2Flag ==1:
     plt.axis([0,6, 0, 1])
     plt.xticks(np.arange(0,6,1))
     plt.show()
-
 #############################################
 #comparing the cross correlation between items and their reconstructions when stored into memory vs. when they're not stored (this is not included in the paper)
 if latents_crossFlag ==1:
