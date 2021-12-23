@@ -1,5 +1,7 @@
 # MLR
-# MNIST VAE was adopted from http://github.com/lyeoni/pytorch-mnist-VAE/blob/master/pytorch-mnist-VAE.ipynb 
+
+-MNIST VAE was adopted from http://github.com/lyeoni/pytorch-mnist-VAE/blob/master/pytorch-mnist-VAE.ipynb 
+
 This is a model of working memory coupled with visual knowledge
 
 -The visual knowledge represented by mVAE is trained on MNIST and f-MNIST
