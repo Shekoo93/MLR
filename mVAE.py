@@ -19,7 +19,6 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from torchvision import datasets, transforms, utils
@@ -33,7 +32,6 @@ import os
 
 from config import numcolors, args
 from dataloader import notMNIST
-
 from PIL import Image, ImageOps, ImageEnhance, __version__ as PILLOW_VERSION
 from joblib import dump, load
 import copy
@@ -61,7 +59,6 @@ try:
 except ImportError:
     accimage = None
 
-
 def _is_pil_image(img):
     if accimage is not None:
         return isinstance(img, (Image.Image, accimage.Image))
@@ -82,7 +79,6 @@ def image_loader(image_name):
     image = loader(image).unsqueeze(0)
     return image.to(device, torch.float)
 
-
 def Colorize_func(img): 
     global numcolors,colorlabels    # necessary because we will be modifying this counter variable
 
@@ -90,13 +86,9 @@ def Colorize_func(img):
 
     rgb = colorvals[thiscolor];  # grab the rgb for this base color
     numcolors += 1  # increment the index
-
     r_color = rgb[0] + np.random.uniform() * colorrange * 2 - colorrange  # generate a color randomly in the neighborhood of the base color
     g_color = rgb[1] + np.random.uniform() * colorrange * 2 - colorrange
     b_color = rgb[2] + np.random.uniform() * colorrange * 2 - colorrange
-
-
-
     np_img = np.array(img, dtype=np.uint8)
     np_img = np.dstack([np_img * r_color, np_img * g_color, np_img * b_color])
     backup = np_img
@@ -112,9 +104,8 @@ def Colorize_func_secret(img,npflag = 0):
     
     thiscolor = colorlabels[numcolors]  
     thiscolor = np.random.randint(10)
-
     rgb = colorvals[thiscolor];  
-      # increment the index
+    
 
     r_color = rgb[0] + np.random.uniform() * colorrange * 2 - colorrange  
     g_color = rgb[1] + np.random.uniform() * colorrange * 2 - colorrange
