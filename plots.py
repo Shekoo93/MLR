@@ -399,11 +399,8 @@ if Tab2Flag ==1:
 #############################################
 #comparing the cross correlation between items and their reconstructions when stored into memory vs. when they're not stored (this is not included in the paper)
 if latents_crossFlag ==1:
-
     numModels=10
-
     print('cross correlations for familiar items when reconstructed and when retrived from BN or L1+skip ')
-
     setSizes=[1,2,3,4] #number of tokens
     
     #list of mean correlation values and standard errors for each set size
@@ -411,35 +408,25 @@ if latents_crossFlag ==1:
     noskip_recon_se=list()   
     noskip_ret_mean=list()
     noskip_ret_se=list()
-
     skip_recon_mean=list()
     skip_recon_se=list()
-
     skip_ret_mean=list()
     skip_ret_se=list()
-
     perms = bigpermnum #number of times it repeats storing/retrieval
-
-    for numItems in setSizes:
-        
+    for numItems in setSizes: 
+      
         #list of correlation values across models
         noskip_Reconmodels=list() 
         noskip_Retmodels=list()
-
         skip_Reconmodels=list()
         skip_Retmodels=list()
-
         print('SetSize {num}'.format(num=numItems))
-
         for modelNumber in range(1, numModels + 1):  # which model should be run, this can be 1 through 10
-
             load_checkpoint(
                 'output{modelNumber}/checkpoint_threeloss_singlegrad200.pth'.format(modelNumber=modelNumber))
-
             # reset the data set for each set size
             test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=numItems, shuffle=True,
                                                               num_workers=nw)
-
             # This function is in tokens_capacity.py
             #familiar items reconstrcuted via BN with no memory
             noskip_noMem= storeretrieve_crosscorrelation_test(numItems, perms, bpsize, bpPortion, shape_coeff,
@@ -465,41 +452,27 @@ if latents_crossFlag ==1:
                                                                       normalize_fact_familiar,
                                                                       normalize_fact_novel, modelNumber,
                                                                       test_loader_smaller, 'fam', 1, 1)
-
-
+            #appending retrievals/reconstructions
             noskip_Reconmodels.append(noskip_noMem)
             noskip_Retmodels.append(noskip_Mem)
-
             skip_Reconmodels.append(skip_noMem)
             skip_Retmodels.append(skip_Mem)
-
-
-
-
+            
+        #reshaping the arrays 
         noskip_Reconmodels_all=np.array(noskip_Reconmodels).reshape(-1,1)
         noskip_Retmodels_all=np.array(noskip_Retmodels).reshape(-1,1)
         skip_Reconmodels_all = np.array(skip_Reconmodels).reshape(1, -1)
         skip_Retmodels_all=np.array(skip_Retmodels).reshape(1,-1)
-
-
-
+        
         #reconstructions and retrievals: mean cross correlation between items and their recons/retrivelas 
         noskip_recon_mean.append(np.mean(noskip_Reconmodels_all))
         noskip_recon_se.append(np.std(noskip_Reconmodels_all)/math.sqrt(numModels))
-
         noskip_ret_mean.append(np.mean(noskip_Retmodels_all))
         noskip_ret_se.append(np.std(noskip_Retmodels_all) / math.sqrt(numModels))
-
         skip_recon_mean.append(np.mean(skip_Reconmodels_all))
         skip_recon_se.append(np.std(skip_Reconmodels_all) / math.sqrt(numModels))
-
         skip_ret_mean.append(np.mean(skip_Retmodels_all))
         skip_ret_se.append(np.std(skip_Retmodels_all) / math.sqrt(numModels))
-
-
-
-
-
 
     #the mean correlation value between input and recontructed images for familiar and novel stimuli
     outputFile.write('correlation for recons from BN\n')
@@ -519,24 +492,16 @@ if latents_crossFlag ==1:
     for i in range(len(setSizes)):
         outputFile.write(
             'SS {0} Corr  {1:.3g}   SE {2:.3g}\n'.format(setSizes[i], skip_ret_mean[i], skip_ret_se[i]))
-
+        
+    #plots the correlation values for familiar/BN and novel/L1 retrievals
     plt.figure()
-
     correlations=np.array([skip_recon_mean,noskip_recon_mean, skip_ret_mean,noskip_ret_mean]).squeeze()
-
     corr_se=np.array([skip_recon_se,noskip_recon_se, skip_ret_se,noskip_ret_se]).squeeze()
-
-
     fig, ax = plt.subplots()
     pos=np.array([1,2,3,4])
-
     ax.bar(pos, correlations, yerr=corr_se, width=.4, alpha=.6, ecolor='black', color=['blue', 'blue', 'red', 'red'])
-
-
     plt.show()
-
 ########################  Ability to extract the correct token from a shape-only stimulus######################
-
 if bindingtestFlag ==1:
     numModels=10
     perms = bigpermnum
@@ -546,24 +511,19 @@ if bindingtestFlag ==1:
     accuracyColor_diff=np.tile(0.0,numModels)
     accuracyShape=np.tile(0.0,numModels)
     accuracyShape_diff=np.tile(0.0,numModels)
-
-    for modelNumber in range(1,numModels+1):
-        
-        
-        print('testing binding cue retrieval')
-               
+    for modelNumber in range(1,numModels+1):  
+        print('testing binding cue retrieval')      
         bs_testing = 2 
         
-         # grey shape cue binding accuracy for only two items when the two items are the same (this funcyion is in Tokens_cpapacity.py)
+        #grey shape cue binding accuracy for only two items when the two items are the same (this funcyion is in Tokens_cpapacity.py)
         correctToken[modelNumber-1],accuracyColor[modelNumber-1],accuracyShape[modelNumber-1] = binding_cue(bs_testing, perms, bpsize, bpPortion, shape_coeff, color_coeff, 'same',
                                                 modelNumber)
-
 
         # grey shape cue binding accuracy for only two items when the two items are different (this funcyion is in Tokens_cpapacity.py)
         correctToken_diff[modelNumber-1],accuracyColor_diff[modelNumber-1] ,accuracyShape_diff[modelNumber-1] = binding_cue(bs_testing, perms, bpsize, bpPortion, shape_coeff, color_coeff
                                                          , 'diff', modelNumber)
         
-    #retriveing correct token + correct shape +correct color  
+    #retriveing correct token + correct shape +correct color and compute the mean and standard deviation across models
     correctToekn_all= correctToken.mean()
     SD=correctToken.std()
     correctToekn_diff_all=correctToken_diff.mean()
@@ -572,50 +532,33 @@ if bindingtestFlag ==1:
     SD_color= accuracyColor.std()   
     accuracyColor_diff_all=accuracyColor_diff.mean()
     SD_color_diff=accuracyColor_diff.std()
-    
     accuracyShape_all=accuracyShape.mean()
     SD_shape= accuracyShape.std()   
     accuracyShape_diff_all=accuracyShape_diff.mean()
     SD_shape_diff=accuracyShape_diff.std()
     
-    
-
+    #write the outputs in the file
     outputFile.write('the correct retrieved token for same shapes condition is: {num} and SD is {sd}'.format(num=correctToekn_all, sd=SD))
     outputFile.write('\n the correct retrieved color for same shapes condition is: {num} and SD is {sd}'.format(num=accuracyColor_all, sd=SD_color))
     outputFile.write('\n the correct retrieved shape for same shapes condition is: {num} and SD is {sd}'.format(num=accuracyShape_all, sd=SD_shape))
-    
     outputFile.write(
         '\n the correct retrieved token for different shapes condition is: {num} and SD is {sd}'.format(num=correctToekn_diff_all, sd=SD_diff))
     outputFile.write(
         '\n the correct retrieved color for different shapes condition is: {num} and SD is {sd}'.format(num=accuracyColor_diff_all, sd=SD_color_diff))
     outputFile.write(
         '\n the correct retrieved shape for different shapes condition is: {num} and SD is {sd}'.format(num=accuracyShape_diff_all, sd=SD_shape_diff))
-
-
-
 #############Table 1 for the no memmory condition#####################
-
 #Disentanglemenat of shape and color without storing in memory using classifier accuracies
 numModels = 10
-
 perms=hugepermnum
-
 if Tab1Flag_noencoding == 1:
-
     print('Table 1 shape labels predicted by the classifier before encoded in memory')
-
-    
     SSreport = np.tile(0.0,[perms,numModels])
     SCreport = np.tile(0.0,[perms,numModels])
     CCreport = np.tile(0.0,[perms,numModels])
     CSreport = np.tile(0.0,[perms,numModels])
-   
-    
-
     for modelNumber in range(1,numModels +1):  # which model should be run, this can be 1 through 10
-
         load_checkpoint('output{modelNumber}/checkpoint_threeloss_singlegrad200.pth'.format(modelNumber=modelNumber))
-
         print('doing model {0} for Table 1'.format(modelNumber))
         clf_shapeS = load('output{num}/ss{num}.joblib'.format(num=modelNumber))
         clf_shapeC = load('output{num}/sc{num}.joblib'.format(num=modelNumber))
@@ -624,27 +567,19 @@ if Tab1Flag_noencoding == 1:
         
         #testing the classifiers accuracy on shape/color disentanglement across 10 models and "rep" number of binding pools
         for rep in range(0,perms):
-
            pred_cc, pred_cs, CCreport[rep,modelNumber - 1], CSreport[rep,modelNumber - 1] = classifier_color_test('noskip',
                                                                                                        clf_colorC,
                                                                                                        clf_colorS)
-
            pred_ss, pred_sc, SSreport[rep,modelNumber-1], SCreport[rep,modelNumber-1] = classifier_shape_test('noskip', clf_shapeS, clf_shapeC)
-           
-     
-   
     CCreport=CCreport.reshape(1,-1)
     CSreport=CSreport.reshape(1,-1)
     SSreport=SSreport.reshape(1,-1)
     SCreport=SCreport.reshape(1,-1)
     
-
+    #write the outputs in a txt.file
     outputFile.write('Table 1, accuracy of SS {0:.4g} SE {1:.4g}, accuracy of SC {2:.4g} SE {3:.4g}\n'.format(SSreport.mean(),SSreport.std()/math.sqrt(numModels*perms), SCreport.mean(),  SCreport.std()/math.sqrt(numModels) ))
     outputFile.write('Table 1, accuracy of CC {0:.4g} SE {1:.4g}, accuracy of CS {2:.4g} SE {3:.4g}\n'.format(CCreport.mean(),CCreport.std()/math.sqrt(numModels*perms), CSreport.mean(),  CSreport.std()/math.sqrt(numModels)))
-
-
 ########################## Table 1 for memory conditions ######################################################################
-
 #testing the classifiers accuracy for shape/color maps when ONE ITEM is stored in the BP
 if Tab1Flag == 1:
     numModels=10
@@ -670,9 +605,7 @@ if Tab1Flag == 1:
     CCreport_l2 = np.tile(0.0, [perms,numModels])
     CSreport_l2 = np.tile(0.0, [perms,numModels])
     
-
     for modelNumber in range(1, numModels + 1):  # which model should be run, this can be 1 through 10
-
         load_checkpoint(
             'output{modelNumber}/checkpoint_threeloss_singlegrad200.pth'.format(modelNumber=modelNumber))
 
@@ -681,25 +614,19 @@ if Tab1Flag == 1:
         clf_shapeC = load('output{num}/sc{num}.joblib'.format(num=modelNumber))
         clf_colorC = load('output{num}/cc{num}.joblib'.format(num=modelNumber))
         clf_colorS = load('output{num}/cs{num}.joblib'.format(num=modelNumber))
-
-
         print('Doing Table 1')
-        
         for rep in range(0,perms):
             numcolors = 0
-
             colorlabels = thecolorlabels(test_dataset)
-
             bs_testing = 1000  # 20000 is the limit
             test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_testing, shuffle=True,
                                                           num_workers=nw)
             colorlabels = colorlabels[0:bs_testing]
-
             images, shapelabels = next(iter(test_loader_smaller))  # peel off a large number of images
             orig_imgs = images.view(-1, 3 * 28 * 28).cuda()
             imgs = orig_imgs.clone()
-
-            # run them all through the encoder
+            
+            #run them all through the encoder
             l1_act, l2_act, shape_act, color_act = activations(imgs)  # get activations from this small set of images
 
             # now store and retrieve them from the BP
@@ -729,16 +656,11 @@ if Tab1Flag == 1:
                                                                                         normalize_fact_familiar)
 
            # Table 1: classifier accuracy for shape and color for memory retrievals
-            
             pred_ss, pred_sc, SSreport_both[rep,modelNumber-1], SCreport_both[rep,modelNumber-1] = classifier_shapemap_test_imgs(shape_out_BP_both, shapelabels,
                                                                              colorlabels, bs_testing, clf_shapeS,
                                                                              clf_shapeC)
             pred_cc, pred_cs, CCreport_both[rep,modelNumber-1], CSreport_both[rep,modelNumber-1]= classifier_colormap_test_imgs(color_out_BP_both, shapelabels,
                                                                              colorlabels, bs_testing, clf_colorC,clf_colorS)
-                                                                             
-        
-
-            # Table 1: classifier accuracy for shape and color for memory retrievals
           
             #classifiers accuracy for memory retrievals of BN_shapeonly for Table 1
             pred_ss, pred_sc, SSreport_shape[rep,modelNumber - 1], SCreport_shape[
@@ -759,7 +681,6 @@ if Tab1Flag == 1:
             rep,modelNumber - 1] = classifier_colormap_test_imgs(color_out_BP_coloronly, shapelabels,
                                                              colorlabels,
                                                              bs_testing, clf_colorC, clf_colorS)
-
             # bp retrievals from layer 1
             BP_layer1_noskip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(BP_layerI_out,
                                                                                                 BP_layer2_out, 1,
@@ -767,19 +688,17 @@ if Tab1Flag == 1:
             z_color = vae.sampling(mu_color, log_var_color).cuda()
             z_shape = vae.sampling(mu_shape, log_var_shape).cuda()
             
-           
             #classifiers accuracy for L1 
             pred_ss, pred_sc, SSreport_l1[rep,modelNumber - 1], SCreport_l1[rep,modelNumber - 1] = classifier_shapemap_test_imgs(z_shape, shapelabels, colorlabels,
                                                                              bs_testing, clf_shapeS, clf_shapeC)
             pred_cc, pred_cs, CCreport_l1[rep,modelNumber - 1], CSreport_l1[rep,modelNumber - 1] = classifier_colormap_test_imgs(z_color, shapelabels, colorlabels,
                                                                              bs_testing, clf_colorC, clf_colorS)
-        
-
+            
+            #bp retrievals from layer 2
             BP_layer2_noskip, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(BP_layerI_out,
-                                                                                                BP_layer2_out, 2,                                                                                            'noskip')  # bp retrievals from layer 2
+                                                                                                BP_layer2_out, 2,'noskip') 
             z_color = vae.sampling(mu_color, log_var_color).cuda()
             z_shape = vae.sampling(mu_shape, log_var_shape).cuda()
-
             
             #classifiers accuracy for L2
             pred_ss, pred_sc, SSreport_l2[rep,modelNumber - 1], SCreport_l2[rep,modelNumber - 1] = classifier_shapemap_test_imgs(z_shape, shapelabels, colorlabels,
@@ -813,8 +732,7 @@ if Tab1Flag == 1:
     SCreport_l2=SCreport_l2.reshape(1,-1)   
     CCreport_l2= CCreport_l2.reshape(1,-1)
     CSreport_l2=CSreport_l2.reshape(1,-1)
-        
-            
+    
    #mean classifiers accuracies across models and repetitions (each repetition generates a random BP)          
     outputFile.write(
         'Table 2 both shape and color, accuracy of SS {0:.4g} SE{1:.4g}, accuracy of SC {2:.4g} SE {3:.4g},\n accuracy of CC {4:.4g} SE {5:.4g}, accuracy of CS {6:.4g} SE {7:.4g}\n'.format(
@@ -870,29 +788,19 @@ if Tab1Flag == 1:
             CCreport_l2.std()/math.sqrt(numModels*perms),
             CSreport_l2.mean(),
             CSreport_l2.std()/math.sqrt(numModels*perms)))
-
-
-
 ################################################ storing visual information (shape and color) along with the categorical label###################################
-
 if Tab1SuppFlag ==1:
-
     print('Table 1S computing the accuracy of storing labels along with shape and color information')
-
     ftest_dataset = datasets.FashionMNIST(root='./fashionmnist_data/', train=False,transform=transforms.Compose([Colorize_func_secret, transforms.ToTensor()]),download=False)
     ftest_dataset.targets= ftest_dataset.targets+10
     test_dataset_MNIST = datasets.MNIST(root='./mnist_data/', train=False,transform=transforms.Compose([Colorize_func_secret, transforms.ToTensor()]),download=False)
 
     #build a combined dataset out of MNIST and Fasion MNIST
     test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))
-
-
     perms = hugepermnum
-   
     setSizes = [1,2,3,4]  # number of tokens
-
     numModels=10
-
+    
     #list of classification accuracies (including SE) for shape and color labels when visual infromation and labels are stored together
     totalAccuracyShape = list()
     totalSEshape=list()
@@ -910,15 +818,13 @@ if Tab1SuppFlag ==1:
     totalSEshapeWlabels=list()
     totalAccuracyColorWlabels = list()
     totalSEcolorWlabels=list()
-    
-    
+      
     #list of classification accuracies (including SE) for shape and color visual recons when half of the visual infromation and labels are stored together
     totalAccuracyShape_half=list()
     totalSEshape_half=list()
     totalAccuracyColor_half=list()
     totalSEcolor_half=list()
-    
-    
+  
     #list of classification accuracies (including SE) for shape and color labels when only labels are stored
     totalAccuracyShape_cat=list()
     totalSEshape_cat=list()
@@ -937,7 +843,6 @@ if Tab1SuppFlag ==1:
     shape_cat_dotplots_models=list()
     color_cat_dotplots_models=list()
 
-
     for numItems in setSizes:
             print('Doing label/shape storage:  Setsize {num}'.format(num=numItems))
             test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=numItems, shuffle=True,
@@ -954,11 +859,7 @@ if Tab1SuppFlag ==1:
             accuracyColorModels_half = list()
             accuracyShapeModels_cat = list()
             accuracyColorModels_cat = list()
-            
-           
-
             for modelNumber in range(1, numModels + 1):  # which model should be run, this can be 1 through 10
-
                 accuracyShape = list()
                 accuracyColor = list()
                 accuracyShape_visual=list()
@@ -969,17 +870,13 @@ if Tab1SuppFlag ==1:
                 accuracyColor_half = list()
                 accuracyShape_cat = list()
                 accuracyColor_cat = list()
-
-
                 load_checkpoint(
                     'output{modelNumber}/checkpoint_threeloss_singlegrad200.pth'.format(modelNumber=modelNumber))
-
                 print('doing model {0} for Table 1S'.format(modelNumber))
                 clf_shapeS = load('output{num}/ss{num}.joblib'.format(num=modelNumber))
                 clf_shapeC = load('output{num}/sc{num}.joblib'.format(num=modelNumber))
                 clf_colorC = load('output{num}/cc{num}.joblib'.format(num=modelNumber))
                 clf_colorS = load('output{num}/cs{num}.joblib'.format(num=modelNumber))
-
 
                 #the ratio of visual information encoded into memory
                 shape_coeff = 1
@@ -988,17 +885,13 @@ if Tab1SuppFlag ==1:
                 color_coeff_half=.5
                 shape_coeff_cat = 0
                 color_coeff_cat = 0
-
                 for i in range(perms):
                     # print('iterstart')
                     images, shapelabels = next(iter(test_loader_smaller))  # load up a set of digits
-
                     imgs = images.view(-1, 3 * 28 * 28).cuda()
                     colorlabels = torch.round(
                         imgs[:, 0] * 255)  
-                    
                     l1_act, l2_act, shape_act, color_act = activations(imgs)
-                  
                     shapepred, x, y, z = classifier_shapemap_test_imgs(shape_act, shapelabels, colorlabels, numItems,
                                                                        clf_shapeS, clf_shapeC)
                     colorpred, x, y, z = classifier_colormap_test_imgs(color_act, shapelabels, colorlabels, numItems,
@@ -1024,25 +917,20 @@ if Tab1SuppFlag ==1:
                                                                               numItems,
                                                                               clf_colorC, clf_colorS)
 
-
-
                     #binding output that stores map activations + labels
                     shape_out_all, color_out_all, l2_out_all, l1_out_all, shape_label_out, color_label_out = BPTokens_with_labels(
                         bpsize, bpPortion, 1,shape_coeff, color_coeff, shape_act, color_act, l1_act, l2_act, shape_onehot,
                         color_onehot,
                         numItems, 0, normalize_fact_familiar)
-
                     shapepred, x, ssreport, z = classifier_shapemap_test_imgs(shape_out_all, shapelabels, colorlabels,
                                                                               numItems,
                                                                               clf_shapeS, clf_shapeC)
                     colorpred, x, ccreport, z = classifier_colormap_test_imgs(color_out_all, shapelabels, colorlabels,
                                                                               numItems,
                                                                               clf_colorC, clf_colorS)
-
                     retrievedshapelabel = shape_label_out.argmax(1)
                     retrievedcolorlabel = color_label_out.argmax(1)
-
-
+                    
                     # Compare accuracy against the original labels
                     accuracy_shape = torch.eq(shapelabels.cpu(), retrievedshapelabel.cpu()).sum().float() / numItems
                     accuracy_color = torch.eq(colorlabels.cpu(), retrievedcolorlabel.cpu()).sum().float() / numItems
@@ -1074,22 +962,19 @@ if Tab1SuppFlag ==1:
                     accuracy_color_half = torch.eq(colorlabels.cpu(), retrievedcolorlabel_half.cpu()).sum().float() / numItems
                     accuracyShape_half.append(accuracy_shape_half)  # appends the perms
                     accuracyColor_half.append(accuracy_color_half)
-                    
-                    
+                                        
                     # binding output that stores only labels with 0% visual information
                     shape_out_all_cat, color_out_all_cat, l2_out_all_cat, l1_out_all_cat, shape_label_out_cat, color_label_out_cat = BPTokens_with_labels(
                         bpsize, bpPortion, 1, shape_coeff_cat, color_coeff_cat, shape_act, color_act, l1_act, l2_act,
                         shape_onehot,
                         color_onehot,
                         numItems, 0, normalize_fact_familiar)
-
                     shapepred_cat, x, ssreport_cat, z = classifier_shapemap_test_imgs(shape_out_all_cat, shapelabels, colorlabels,
                                                                               numItems,
                                                                               clf_shapeS, clf_shapeC)
                     colorpred_cat, x, ccreport_cat, z = classifier_colormap_test_imgs(color_out_all_cat, shapelabels, colorlabels,
                                                                               numItems,
                                                                               clf_colorC, clf_colorS)
-
                     retrievedshapelabel_cat = shape_label_out_cat.argmax(1)
                     retrievedcolorlabel_cat = color_label_out_cat.argmax(1)
 
@@ -1097,10 +982,6 @@ if Tab1SuppFlag ==1:
                     accuracy_color_cat = torch.eq(colorlabels.cpu(), retrievedcolorlabel_cat.cpu()).sum().float() / numItems
                     accuracyShape_cat.append(accuracy_shape_cat)  # appends the perms
                     accuracyColor_cat.append(accuracy_color_cat)
-
-
-
-
 
                 #append the accuracy for all models
                 accuracyShapeModels.append(sum(accuracyShape) / perms)
@@ -1113,8 +994,7 @@ if Tab1SuppFlag ==1:
                 accuracyColorModels_half.append(sum(accuracyColor_half) / perms)
                 accuracyShapeModels_cat.append(sum(accuracyShape_cat) / perms)
                 accuracyColorModels_cat.append(sum(accuracyColor_cat) / perms)
-            
-          
+                  
             shape_dotplots_models.append(torch.stack(accuracyShapeModels).view(1,-1))
             totalAccuracyShape.append(torch.stack(accuracyShapeModels).mean())
             totalSEshape.append(torch.stack(accuracyShapeModels).std()/math.sqrt(numModels))
@@ -1153,13 +1033,7 @@ if Tab1SuppFlag ==1:
             
             color_cat_dotplots_models.append(torch.stack(accuracyColorModels_cat).view(1,-1))
             totalAccuracyColor_cat.append(torch.stack(accuracyColorModels_cat).mean())
-            totalSEcolor_cat.append(torch.stack(accuracyColorModels_cat).std() / math.sqrt(numModels))
-            
-    
-
- 
-
-             
+            totalSEcolor_cat.append(torch.stack(accuracyColorModels_cat).std() / math.sqrt(numModels))           
 
     print(shape_dotplots_models)
     print(color_dotplots_models)
@@ -1171,13 +1045,13 @@ if Tab1SuppFlag ==1:
     print(color_half_dotplots_models)
     print(shape_cat_dotplots_models)
     print(color_cat_dotplots_models)
-
+    
+    #write the outputs
     outputFile.write('Table 1S, accuracy of ShapeLabel')
  
     #accuracy of retrieving lebals (stored: visual information +labels)
     for i in range(len(setSizes)):
-        outputFile.write('\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyShape[i],totalSEshape[i] ))
-   
+        outputFile.write('\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyShape[i],totalSEshape[i] ))  
     outputFile.write('\n\nTable 3, accuracy of ColorLabel')
     for i in range(len(setSizes)):
         outputFile.write(
@@ -1188,7 +1062,6 @@ if Tab1SuppFlag ==1:
     for i in range(len(setSizes)):
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyShape_visual[i], totalSEshapeVisual[i]))
-
     outputFile.write('\n\nTable 3, accuracy of color map with no labels')
     for i in range(len(setSizes)):
         outputFile.write(
@@ -1200,18 +1073,17 @@ if Tab1SuppFlag ==1:
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyShapeWlabels[i],
                                                                 totalSEshapeWlabels[i]))
-
     outputFile.write('\n\nTable 3, accuracy of color map with labels')
     for i in range(len(setSizes)):
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyColorWlabels[i],
                                                                  totalSEcolorWlabels[i]))
+        
     #accuracy of retriveing labels (stored: 50% visual + labels)
     outputFile.write('\n\nTable 3, accuracy of ShapeLabel for 50% visual')
     for i in range(len(setSizes)):
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyShape_half[i], totalSEshape_half[i]))
-
     outputFile.write('\n\nTable 3, accuracy of ColorLabel for 50% visual')
     for i in range(len(setSizes)):
         outputFile.write(
@@ -1222,43 +1094,32 @@ if Tab1SuppFlag ==1:
     for i in range(len(setSizes)):
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyShape_cat[i], totalSEshape_cat[i]))
-
     outputFile.write('\n\nTable 3, accuracy of ColorLabel for 0% visual')
     for i in range(len(setSizes)):
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyColor_cat[i], totalSEcolor_cat[i]))
-
-
 ######This part is to detect whether a stimulus is novel or familiar#################
-
-if noveltyDetectionFlag==1:
-    
-  
+if noveltyDetectionFlag==1 
     perms=smallpermnum
     numModels=10
     
     #accuracy of detecting a familiar vs novel item across different models and for "perms" number of binding pools (every time, a new BP with new sets of weights is generated)
     acc_fam=torch.zeros(numModels,perms)
     acc_nov=torch.zeros(numModels,perms)
-    
-    for modelNumber in range (1,numModels+1):
-        
+    for modelNumber in range (1,numModels+1):   
         #this function is in tokens_capacity.py
         acc_fam[modelNumber-1,:], acc_nov[modelNumber-1,:]= novelty_detect( perms, bpsize, bpPortion, shape_coeff, color_coeff, normalize_fact_familiar,
                   normalize_fact_novel, modelNumber, test_loader_smaller)
         
     #mean accuracy of detecting whether the stimulus is novel or familiar
     mean_fam=acc_fam.view(1,-1).mean()
-    fam_SE= acc_fam.view(1,-1).std()/(len(acc_fam.view(1,-1)))
-    
+    fam_SE= acc_fam.view(1,-1).std()/(len(acc_fam.view(1,-1)))  
     mean_nov=acc_nov.view(1,-1).mean()
     nov_SE= acc_nov.view(1,-1).std()/(len(acc_nov.view(1,-1)))
     
-       
+    #write the outputs (mean and standard error) in the file
     outputFile.write(
-            '\accuracy of detecting the familiar shapes : mean is {0:.4g} and SE is {1:.4g} '.format(mean_fam, fam_SE))
-    
+            '\accuracy of detecting the familiar shapes : mean is {0:.4g} and SE is {1:.4g} '.format(mean_fam, fam_SE))    
     outputFile.write(
             '\naccuracy of detecting the novel shapes : mean is {0:.4g} and SE is {1:.4g} '.format(mean_nov, nov_SE))
-
 outputFile.close()
