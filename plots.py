@@ -19,7 +19,6 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from torchvision import datasets, transforms
@@ -35,38 +34,26 @@ import imageio, time
 import math
 import sys
 import pandas as pd
-
 config.init()
-
 from config import numcolors
 global numcolors, colorlabels
 from PIL import Image
-
 from mVAE import *
 from tokens_capacity import *
 import os
-
 from PIL import Image, ImageOps, ImageEnhance, __version__ as PILLOW_VERSION
 
-
 modelNumber= 1 #which model should be run, this can be 1 through 10
-
 load_checkpoint('output{modelNumber}/checkpoint_threeloss_singlegrad200.pth'.format(modelNumber=modelNumber))
-
 print('Loading the classifiers')
 clf_shapeS=load('output{num}/ss{num}.joblib'.format(num=modelNumber))
 clf_shapeC=load('output{num}/sc{num}.joblib'.format(num=modelNumber))
 clf_colorC=load('output{num}/cc{num}.joblib'.format(num=modelNumber))
 clf_colorS=load('output{num}/cs{num}.joblib'.format(num=modelNumber))
 #write to a text file
-
 outputFile = open('outputFile.txt'.format(modelNumber),'w')
 
-
-
 ### Parameters
-
-
 bs_testing = 1000     # number of images for testing. 20000 is the limit
 shape_coeff = 1       #cofficient of the shape map
 color_coeff = 1       #coefficient of the color map
@@ -74,13 +61,11 @@ l1_coeff = 1          #coefficient of layer 1
 l2_coeff = 1          #coefficient of layer 2
 shapeLabel_coeff= 1   #coefficient of the shape label
 colorLabel_coeff = 1  #coefficient of the color label
-
 bpsize = 2500         #size of the binding pool
 token_overlap = .4
 bpPortion = int(token_overlap *bpsize) # number binding pool neurons used for each item
-
 normalize_fact_familiar=1
-normalize_fact_novel=1
+normalize_fact_novel=1                 # 
 all_imgs = []
 
 #number of repetions for statistical inference
