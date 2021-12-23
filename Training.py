@@ -1,3 +1,6 @@
+#Code to train the MLR model's visual knowledge  (a modified variational autoencoder)
+
+
 
 # prerequisites
 import torch
