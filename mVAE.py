@@ -329,7 +329,7 @@ if torch.cuda.is_available():
 optimizer = optim.Adam(vae.parameters())
 
 
-# return reconstruction error (this will be used to train the skip connection)
+#return reconstruction error (this will be used to train the skip connection)
 def loss_function(recon_x, x, mu, log_var, mu_c, log_var_c):
     BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784 * 3), reduction='sum')
     return BCE 
@@ -355,7 +355,7 @@ def loss_function_color(recon_x, x, mu, log_var):
     maxg, maxi = torch.max(recon[:, 1, :], -1, keepdim=True)
     maxb, maxi = torch.max(recon[:, 2, :], -1, keepdim=True)
 
-    # now build a new reconsutrction that has only the max color, and no shape information at all
+ #now build a new reconsutrction that has only the max color, and no shape information at all
  
     recon[:, 0, :] = maxr
     recon[:, 1, :] = maxg
@@ -391,6 +391,7 @@ def train(epoch, whichdecode):
            count=count+1
            detachgrad = 'none'
            optimizer.zero_grad()
+           # ADD COMMENTS
            if count% 3 == 0:
                     whichdecode_use = 'noskip'
                     detachgrad = 'color'
@@ -540,8 +541,7 @@ def BP(bp_outdim, l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff
         c1_bw = c1_fw.clone().t()
         c2_bw = c2_fw.clone().t()
         c3_bw = c3_fw.clone().t()
-        c4_bw = c4_fw.clone().t()
-        
+        c4_bw = c4_fw.clone().t()    
         BP_in_all = list()
         shape_out_BP_all = list()
         color_out_BP_all = list()
@@ -583,16 +583,16 @@ def BP(bp_outdim, l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff
         return BP_L1_each, shape_out_BP, color_out_BP, BP_layerI_out, BP_layer2_out
 
 
-#binidng pool for 1 items and more
+#binding pool for 1 item and more only when storing visual items
 def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, shape_act, color_act,l1_act,l2_act, bs_testing, layernum, normalize_fact ):
     # Store and retrieve multiple items in the binding pool
     # bp_outdim:  size of binding pool
     # bpPortion:  number of binding pool units per token
-    # shape_coef:  weight for storing shape information
-    # color_coef:  weight for storing shape information
+    # shape_coef: weight for storing shape information
+    # color_coef: weight for storing shape information
     # shape_act:  activations from shape bottleneck
     # color_act:  activations from color bottleneck
-    # bs_testing:   number of items 
+    # bs_testing: number of items 
 
     with torch.no_grad():  
         notLink_all = list()  # will be used to accumulate the specific token linkages
@@ -639,7 +639,7 @@ def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, sh
         BP_in_items = BP_in_items.repeat(bs_testing, 1)  # repeat the matrix to the number of items to easier retrieve
         notLink_all = torch.stack(notLink_all)  # this is the set of 0'd connections for each of the tokens
 
-        # NOW REMEMBER
+        # Now remember
         for items in range(bs_testing):  # for each item to be retrieved
             BP_in_items[items, notLink_all[items, :]] = 0  # set the BPs to zero for this token retrieval
             if layernum == 1:
@@ -658,7 +658,7 @@ def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, sh
     return shape_out_all, color_out_all, L2_out_all, L1_out_all
 
 
-#binding pool that stores images along with labels
+#binding pool that stores images along with labels. In this implementation we are only encoding one layer at a time (L1, L2, shape/color maps)
 def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coef, shape_act, color_act,l1_act,l2_act,oneHotShape, oneHotcolor, bs_testing, layernum, normalize_fact ):
     # Store and retrieve multiple items including labels in the binding pool 
     # bp_outdim:  size of binding pool
@@ -691,7 +691,7 @@ def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coe
         shape_label_out=torch.zeros(bs_testing, bp_in_Slabels_dim).cuda()
         color_label_out = torch.zeros(bs_testing, bp_in_Clabels_dim).cuda()
         
-        #make the randomized fixed weights to the binding pool
+        # make the randomized fixed weights to the binding pool
         shape_fw = torch.randn(bp_in_shape_dim, bp_outdim).cuda()  
         color_fw = torch.randn(bp_in_color_dim, bp_outdim).cuda()
         L1_fw = torch.randn(bp_in_L1_dim, bp_outdim).cuda()
@@ -846,7 +846,7 @@ clf_cc = svm.SVC(C=10, gamma='scale', kernel='rbf')  # define the classifier for
 clf_cs = svm.SVC(C=10, gamma='scale', kernel='rbf')#classify color map against shape labels
 
 
-#training the shape map on shape labels and color labels 
+# training the shape map on shape labels and color labels 
 def classifier_shape_train(whichdecode_use):
     global colorlabels, numcolors
     colorlabels = np.random.randint(0, 10, 1000000)
@@ -912,7 +912,7 @@ def classifier_color_train(whichdecode_use):
             print('training color bottleneck against shape labels cs')
             clf_cs.fit(z_color.cpu().numpy(), train_shapelabels)
 
-#testing the color classifier (one image at a time)
+# testing the color classifier (one image at a time)
 def classifier_color_test(whichdecode_use, clf_cc, clf_cs,verbose=0):
     global colorlabels, numcolors
     colorlabels = np.random.randint(0, 10, 1000000)
@@ -946,7 +946,7 @@ def classifier_color_test(whichdecode_use, clf_cc, clf_cs,verbose=0):
 
 
 
-#testing on shape for multiple images stored in memory
+# testing on shape for multiple images stored in memory
 
 def classifier_shapemap_test_imgs(shape, shapelabels, colorlabels,numImg, clf_shapeS, clf_shapeC,verbose = 0):
 
