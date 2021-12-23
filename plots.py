@@ -53,7 +53,7 @@ clf_colorS=load('output{num}/cs{num}.joblib'.format(num=modelNumber))
 #write to a text file
 outputFile = open('outputFile.txt'.format(modelNumber),'w')
 
-### Parameters
+#Parameters
 bs_testing = 1000     # number of images for testing. 20000 is the limit
 shape_coeff = 1       #cofficient of the shape map
 color_coeff = 1       #coefficient of the color map
@@ -64,8 +64,8 @@ colorLabel_coeff = 1  #coefficient of the color label
 bpsize = 2500         #size of the binding pool
 token_overlap = .4
 bpPortion = int(token_overlap *bpsize) # number binding pool neurons used for each item
-normalize_fact_familiar=1
-normalize_fact_novel=1                 # 
+normalize_fact_familiar=1              #factors that multiply the BP activations based on whether they are familiar or not (these factors are set to 1 in our model, but can be adjusted to different values)
+normalize_fact_novel=1                  
 all_imgs = []
 
 #number of repetions for statistical inference
@@ -73,24 +73,20 @@ hugepermnum=10000
 bigpermnum = 500
 smallpermnum = 100
 
+#flags that determine which figure/table is simulated
 Fig1SuppFlag =0      #reconstructions straight from the VAE (supplementary figure 1)
 Fig2aFlag = 0        #binding pool reconstructions
 Fig2bFlag = 0        #novel reconstructions
 Fig2cFlag = 0        #token reconstructions (reconstructing multiple items)
-
 bindingtestFlag = 0  #simulating binding shape-color of two items
-
 Tab1Flag_noencoding = 0 #classify reconstructions (no memory)
 Tab1Flag =0             #classify binding pool memories
 Tab1SuppFlag = 0        #memory of labels (this is table 1 + Figure 2 in supplemental which includes the data in Figure 3)
 Tab2Flag = 0            #Cross correlations for familiar vs novel
 noveltyDetectionFlag=1  #detecting whether a stimulus is familiar or not
 latents_crossFlag = 0   #Cross correlations for familiar vs novel for when infromation is stored from the shape/color maps vs. L1. versus straight reconstructions 
-                        #This Figure is not included in the paper
-
-
-
-#### generate some random samples
+                        #(This Figure is not included in the paper)
+#generate some random samples
 zc=torch.randn(64,8).cuda()*1
 zs=torch.randn(64,8).cuda()*1
 with torch.no_grad():
@@ -107,18 +103,14 @@ save_image(sample_s[0:8], 'output{num}/sample_shape.png'.format(num=modelNumber)
 test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))    #combine fashion-mnist and mnist
 test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_testing, shuffle=True, num_workers=nw)  #load the dataset
 
-
-
 ########################## straight reconstrcutions from the VAE (Fig1 supplemental)#########################
 if Fig1SuppFlag ==1:
     print('showing reconstructions from shape and color')
-    numimg= 100 #number of images to display in this figure
-    bs_testing = numimg
-
+    bs_testing = 100 #number of images to display in this figure
+    
     #build a combined dataset out of MNIST and Fasion MNIST
     test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))
     test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_testing, shuffle=True, num_workers=nw)
-
     numcolors = 0
     colorlabels = np.random.randint(0, 10, 100000)
     test_colorlabels = thecolorlabels(test_dataset)
