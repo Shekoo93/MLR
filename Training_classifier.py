@@ -31,10 +31,11 @@ from mVAE import *
 from joblib import dump, load
 from PIL import Image, ImageOps, ImageEnhance, __version__ as PILLOW_VERSION
 
-
+#number of models that you like to train classifiers on
+numModels=10
 
 # training classifiers against 10 trained models
-for outs in range(1,11):
+for outs in range(1,numModels+1):
 
   
     load_checkpoint('output{num}/checkpoint_threeloss_singlegrad200.pth'.format(num=outs))
