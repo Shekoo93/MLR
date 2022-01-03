@@ -105,8 +105,8 @@ test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_si
 ########################## straight reconstrcutions from the VAE (Fig1 supplemental)#########################
 if Fig1SuppFlag ==1:
     print('showing reconstructions from shape and color')
-    numimg=10
-    bs_testing = numimg #number of images to display in this figure
+    
+    bs_testing = 10 #number of images to display in this figure
     
     #build a combined dataset out of MNIST and Fasion MNIST
     test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))
