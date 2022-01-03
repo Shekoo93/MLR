@@ -40,13 +40,14 @@ for outs in range(1,11):
     load_checkpoint('output{num}/checkpoint_threeloss_singlegrad200.pth'.format(num=outs))
     print(outs)
              
-    print('Training two classifiers based on color')
+    print('Training two classifiers based on shape')
     numcolors = 0
     classifier_shape_train('noskip')
     #save the classifiers in the corresponding folder
     dump(clf_sc, 'output{num}/sc{num}.joblib'.format(num=outs))
     dump(clf_ss, 'output{num}/ss{num}.joblib'.format(num=outs))
     numcolors = 0
+    print('Training two classifiers based on color')
     classifier_color_train('noskip')
     dump(clf_cc, 'output{num}/cc{num}.joblib'.format(num=outs))
     dump(clf_cs, 'output{num}/cs{num}.joblib'.format(num=outs))
