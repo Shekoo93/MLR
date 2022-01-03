@@ -1100,7 +1100,7 @@ if Tab1SuppFlag ==1:
         outputFile.write(
             '\nSS {0} mean is {1:.4g} and SE is {2:.4g} '.format(setSizes[i], totalAccuracyColor_cat[i], totalSEcolor_cat[i]))
 ######This part is to detect whether a stimulus is novel or familiar#################
-if noveltyDetectionFlag==1 
+if noveltyDetectionFlag==1:
     perms=smallpermnum
     numModels=10
     
