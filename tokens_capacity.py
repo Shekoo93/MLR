@@ -1,7 +1,6 @@
 
 
 colornames = ["red", "blue","green","purple","yellow","cyan","orange","brown","pink","teal"]
-
 # generic prerequisites
 import torch
 import numpy as np
@@ -114,7 +113,6 @@ def binding_cue(bs_testing, perms,bpsize, bpPortion, shape_coeff, color_coeff,sa
     return  accuracy_correctToken, accuracy_color, accuracy_shape
 
 ################################cross correlations for familiar vs. novel
-
  # This function stores and retrieves a given set size of items as either familiar (using bottleneck)_or novel items (using L1)
  # performance is evaluated with a pixelwise correlation between the input and output layers
  # it shows that performance is lower for the novels, and also drops off more quickly as set size increases
@@ -196,7 +194,6 @@ def storeretrieve_crosscorrelation_test(setSize, perms, bpsize, bpPortion, shape
     return np.array(corr_multiple)
 
 ###################################### detecting whether a stimulus novel or familiar
-
 #this function detects whether a given item is familiar or novel  comparing the cross-correlation
 #between the original image and its reconstruction form the BN
 
