@@ -23,3 +23,5 @@ run the plot.py file. Within the file there are flags that can be set to 1 or ze
 To get the pre-trained model in addition to the simulation results please visit the OSF webpage (https://osf.io/tpzqk/). Run the plots.py file to reproduce the results
 
 Package Requirements are as listed in requirements.txt
+
+-tokens_capacity.py file should not be changed. It consists of functions that compute cross correlations for novel vs. familiar shapes , detecting whether a given stimulus is novel or familiar and binding test
