@@ -1,5 +1,5 @@
 
-#this Function train 4 classifiers per model: shape labels on shape map, shape labels on color map, color labels on color map and color labels on shape map.
+#this Function trains 4 classifiers per model: shape labels on shape map, shape labels on color map, color labels on color map and color labels on shape map.
 
 colornames = ["red", "blue","green","purple","yellow","cyan","orange","brown","pink","teal"]
 
