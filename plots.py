@@ -64,7 +64,8 @@ bpsize = 2500         #size of the binding pool
 token_overlap = .4
 bpPortion = int(token_overlap *bpsize) # number binding pool neurons used for each item
 normalize_fact_familiar=1              #factors that multiply the BP activations based on whether they are familiar or not (these factors are set to 1 in our model, but can be adjusted to different values)
-normalize_fact_novel=1                  
+normalize_fact_novel=1    
+numModels=10          #number of models being tested in some of the functions
 all_imgs = []
 
 #number of repetions for statistical inference
@@ -105,8 +106,8 @@ test_loader_smaller = torch.utils.data.DataLoader(dataset=test_dataset, batch_si
 ########################## straight reconstrcutions from the VAE (Fig1 supplemental)#########################
 if Fig1SuppFlag ==1:
     print('showing reconstructions from shape and color')
-    
-    bs_testing = 10 #number of images to display in this figure
+    numimg=10
+    bs_testing = numimg #number of images to display in this figure
     
     #build a combined dataset out of MNIST and Fasion MNIST
     test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))
@@ -275,7 +276,7 @@ if Fig2cFlag ==1 :
 ###################Table 2##################################################
 if Tab2Flag ==1:
 
-    numModels=10   
+      
     print('Tab2 loss of quality of familiar vs novel items using correlation')
     setSizes=[1,2,3,4] #number of tokens
    
@@ -400,7 +401,7 @@ if Tab2Flag ==1:
 #############################################
 #comparing the cross correlation between items and their reconstructions when stored into memory vs. when they're not stored (this is not included in the paper)
 if latents_crossFlag ==1:
-    numModels=10
+    
     print('cross correlations for familiar items when reconstructed and when retrived from BN or L1+skip ')
     setSizes=[1,2,3,4] #number of tokens
     
@@ -504,7 +505,7 @@ if latents_crossFlag ==1:
     plt.show()
 ########################  Ability to extract the correct token from a shape-only stimulus######################
 if bindingtestFlag ==1:
-    numModels=10
+ 
     perms = bigpermnum
     correctToken=np.tile(0.0,numModels)
     correctToken_diff=np.tile(0.0,numModels)
@@ -550,7 +551,7 @@ if bindingtestFlag ==1:
         '\n the correct retrieved shape for different shapes condition is: {num} and SD is {sd}'.format(num=accuracyShape_diff_all, sd=SD_shape_diff))
 #############Table 1 for the no memmory condition#####################
 #Disentanglemenat of shape and color without storing in memory using classifier accuracies
-numModels = 10
+
 perms=hugepermnum
 if Tab1Flag_noencoding == 1:
     print('Table 1 shape labels predicted by the classifier before encoded in memory')
@@ -583,7 +584,7 @@ if Tab1Flag_noencoding == 1:
 ########################## Table 1 for memory conditions ######################################################################
 #testing the classifiers accuracy for shape/color maps when ONE ITEM is stored in the BP
 if Tab1Flag == 1:
-    numModels=10
+    
     perms=10
     SSreport_both = np.tile(0.0, [perms,numModels])
     SCreport_both = np.tile(0.0, [perms,numModels])
@@ -800,7 +801,7 @@ if Tab1SuppFlag ==1:
     test_dataset = torch.utils.data.ConcatDataset((test_dataset_MNIST, ftest_dataset))
     perms = hugepermnum
     setSizes = [1,2,3,4]  # number of tokens
-    numModels=10
+    
     
     #list of classification accuracies (including SE) for shape and color labels when visual infromation and labels are stored together
     totalAccuracyShape = list()
@@ -1102,7 +1103,7 @@ if Tab1SuppFlag ==1:
 ######This part is to detect whether a stimulus is novel or familiar#################
 if noveltyDetectionFlag==1:
     perms=smallpermnum
-    numModels=10
+  
     
     #accuracy of detecting a familiar vs novel item across different models and for "perms" number of binding pools (every time, a new BP with new sets of weights is generated)
     acc_fam=torch.zeros(numModels,perms)
