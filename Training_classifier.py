@@ -1,3 +1,6 @@
+
+#this Function train 4 classifiers per model: shape labels on shape map, shape labels on color map, color labels on color map and color labels on shape map.
+
 colornames = ["red", "blue","green","purple","yellow","cyan","orange","brown","pink","teal"]
 
 
@@ -31,24 +34,25 @@ from mVAE import *
 from joblib import dump, load
 from PIL import Image, ImageOps, ImageEnhance, __version__ as PILLOW_VERSION
 
-
+numModels=10  #number of models that classifiers are trained on
 
 # training classifiers against 10 trained models
-for outs in range(1,11):
+for outs in range(1,numModels+1):
 
-  
     load_checkpoint('output{num}/checkpoint_threeloss_singlegrad200.pth'.format(num=outs))
-    print(outs)
-             
-    print('Training two classifiers based on shape')
+    print('Training two classifiers based on shape for model number {x}'.format(x=outs))
     numcolors = 0
     classifier_shape_train('noskip')
+    
     #save the classifiers in the corresponding folder
     dump(clf_sc, 'output{num}/sc{num}.joblib'.format(num=outs))
     dump(clf_ss, 'output{num}/ss{num}.joblib'.format(num=outs))
+    
+    print('Training two classifiers based on color for model number {x}'.format(x=outs))
     numcolors = 0
-    print('Training two classifiers based on color')
     classifier_color_train('noskip')
+    
+    #save classifiers in the corresponding folder
     dump(clf_cc, 'output{num}/cc{num}.joblib'.format(num=outs))
     dump(clf_cs, 'output{num}/cs{num}.joblib'.format(num=outs))
 
