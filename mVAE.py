@@ -29,13 +29,10 @@ from sklearn.metrics import classification_report, confusion_matrix
 from tqdm import tqdm
 import imageio
 import os
-
 from config import numcolors, args
-from dataloader import notMNIST
 from PIL import Image, ImageOps, ImageEnhance, __version__ as PILLOW_VERSION
 from joblib import dump, load
 import copy
-
 global colorlabels
 
 #generating a large vector of color labels
