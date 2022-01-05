@@ -81,9 +81,9 @@ Fig2cFlag = 0        #token reconstructions (reconstructing multiple items)
 bindingtestFlag = 0  #simulating binding shape-color of two items
 Tab1Flag_noencoding = 0 #classify reconstructions (no memory)
 Tab1Flag =0             #classify binding pool memories
-Tab1SuppFlag = 0        #memory of labels (this is table 1 + Figure 2 in supplemental which includes the data in Figure 3)
-Tab2Flag = 0            #Cross correlations for familiar vs novel
-noveltyDetectionFlag=1  #detecting whether a stimulus is familiar or not
+Tab1SuppFlag =0        #memory of labels (this is table 1 + Figure 2 in supplemental which includes the data in Figure 3)
+Tab2Flag = 1            #Cross correlations for familiar vs novel
+noveltyDetectionFlag=0  #detecting whether a stimulus is familiar or not
 latents_crossFlag = 0   #Cross correlations for familiar vs novel for when infromation is stored from the shape/color maps vs. L1. versus straight reconstructions 
                         #(This Figure is not included in the paper)
 #generate some random samples
@@ -264,11 +264,19 @@ if Fig2cFlag ==1 :
     orig_imgs = images.view(-1, 3 * 28 * 28).cuda()
     imgs = orig_imgs.clone()
     l1_act, l2_act, shape_act, color_act = activations(imgs)
+    storelabels=0
+    
+    
     for n in range(1,5):
+        
+        #generating one hot labels as the function's input
+        oneHotShape=torch.zeros(n,20)
+        oneHotcolor=torch.zeros(n,10)
+        
         #activations after shape/color map was stored in the BP
-        shape_out_all, color_out_all, l2_out_all, l1_out_all = BPTokens(bpsize, bpPortion, shape_coeff, color_coeff,l1_coeff,l2_coeff,
-                                                                        shape_act, color_act, l1_act, l2_act,
-                                                                        n, 0, normalize_fact_familiar)
+        shape_out_all, color_out_all, l2_out_all, l1_out_all, shapelabel_junk, colorlabel_junk = BPTokens_with_labels(bpsize, bpPortion,storelabels, shape_coeff, color_coeff, shape_act, color_act,
+                                                                        l1_act, l2_act,oneHotShape, oneHotcolor,n, 0, normalize_fact_familiar)
+                                                                        
         retrievals = vae.decoder_noskip(shape_out_all, color_out_all, 0).cuda()  
         imgs = orig_imgs.clone()
         save_image(imgs[0: n].view(n, 3, 28, 28), 'output{num}/figure2coriginals{d}.png'.format(num=modelNumber,d=n))

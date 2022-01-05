@@ -1,6 +1,6 @@
 
 # MNIST VAE from http://github.com/lyeoni/pytorch-mnist-VAE/blob/master/pytorch-mnist-VAE.ipynb 
-# Modified by Brad Wyble and Shekoo Hedayati
+# Modified by Brad Wyble and Shekoofeh Hedayati
 # Modifications:
 # Colorize transform that changes the colors of a grayscale image
 # colors are chosen from 10 options:
@@ -583,81 +583,6 @@ def BP(bp_outdim, l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff
         return BP_L1_each, shape_out_BP, color_out_BP, BP_layerI_out, BP_layer2_out
 
 
-#binding pool for 1 item and more only when storing visual items
-def BPTokens(bp_outdim, bpPortion, shape_coef, color_coef, l1_coeff,l2_coeff, shape_act, color_act,l1_act,l2_act, bs_testing, layernum, normalize_fact ):
-    # Store and retrieve multiple items in the binding pool
-    # bp_outdim:  size of binding pool
-    # bpPortion:  number of binding pool units per token
-    # shape_coef: weight for storing shape information
-    # color_coef: weight for storing shape information
-    # shape_act:  activations from shape bottleneck
-    # color_act:  activations from color bottleneck
-    # bs_testing: number of items 
-
-    with torch.no_grad():  
-        notLink_all = list()  # will be used to accumulate the specific token linkages
-        BP_in_all = list()  # will be used to accumulate the bp activations for each item
-
-        bp_in_shape_dim = shape_act.shape[1]  # neurons in the Bottleneck
-        bp_in_color_dim = color_act.shape[1]
-        bp_in_L1_dim = l1_act.shape[1]
-        bp_in_L2_dim = l2_act.shape[1]
-
-        shape_out_all = torch.zeros(bs_testing,
-                                    bp_in_shape_dim).cuda()  # will be used to accumulate the reconstructed shapes
-        color_out_all = torch.zeros(bs_testing,
-                                    bp_in_color_dim).cuda()  # will be used to accumulate the reconstructed colors
-        L1_out_all = torch.zeros(bs_testing, bp_in_L1_dim).cuda()
-        L2_out_all = torch.zeros(bs_testing, bp_in_L2_dim).cuda()
-        
-        # make the randomized fixed weights to the binding pool
-        shape_fw = torch.randn(bp_in_shape_dim,bp_outdim).cuda()                                
-        color_fw = torch.randn(bp_in_color_dim, bp_outdim).cuda()
-        L1_fw = torch.randn(bp_in_L1_dim, bp_outdim).cuda()
-        L2_fw = torch.randn(bp_in_L2_dim, bp_outdim).cuda()
-
-        # ENCODING!  Store each item in the binding pool
-        for items in range(bs_testing):  # the number of images being stored
-            tkLink_tot = torch.randperm(bp_outdim)  # for each token figure out which connections will be set to 0
-            notLink = tkLink_tot[bpPortion:]  # list of 0'd BPs for this token
-
-            if layernum == 1:
-                BP_in_eachimg = torch.mm(l1_act[items, :].view(1, -1), L1_fw)*l1_coeff
-            elif layernum==2:
-                BP_in_eachimg = torch.mm(l2_act[items, :].view(1, -1), L2_fw)*l2_coeff
-            else:
-                BP_in_eachimg = torch.mm(shape_act[items, :].view(1, -1), shape_fw) * shape_coef + torch.mm(
-                    color_act[items, :].view(1, -1), color_fw) * color_coef  # binding pool inputs (forward activations)
-
-            BP_in_eachimg[:, notLink] = 0  # set not linked activations to zero
-            BP_in_all.append(BP_in_eachimg)  # appending and stacking images
-            notLink_all.append(notLink)
-        # now sum all of the BPs together to form one consolidated BP activation set.
-        BP_in_items = torch.stack(BP_in_all)
-        BP_in_items = torch.squeeze(BP_in_items, 1)
-        BP_in_items = torch.sum(BP_in_items, 0).view(1, -1)  # divide by the token percent, as a normalizing factor
-        BP_in_items = BP_in_items.repeat(bs_testing, 1)  # repeat the matrix to the number of items to easier retrieve
-        notLink_all = torch.stack(notLink_all)  # this is the set of 0'd connections for each of the tokens
-
-        # Now remember
-        for items in range(bs_testing):  # for each item to be retrieved
-            BP_in_items[items, notLink_all[items, :]] = 0  # set the BPs to zero for this token retrieval
-            if layernum == 1:
-                L1_out_eachimg = torch.mm(BP_in_items[items, :].view(1, -1),L1_fw.t()).cuda()  # do the actual reconstruction
-                L1_out_all[items,:] = (L1_out_eachimg / bpPortion ) * normalize_fact # put the reconstructions into a bit tensor and then normalize by the effective # of BP nodes
-            if layernum==2:
-
-                L2_out_eachimg = torch.mm(BP_in_items[items, :].view(1, -1),L2_fw.t()).cuda()  # do the actual reconstruction
-                L2_out_all[items, :] = L2_out_eachimg / bpPortion  # put the reconstructions into a bit tensor and then normalize by the effective # of BP nodes
-            else:
-                shape_out_eachimg = torch.mm(BP_in_items[items, :].view(1, -1),shape_fw.t()).cuda()  # do the actual reconstruction
-                color_out_eachimg = torch.mm(BP_in_items[items, :].view(1, -1), color_fw.t()).cuda()
-                shape_out_all[items, :] = shape_out_eachimg / bpPortion  # put the reconstructions into a bit tensor and then normalize by the effective # of BP nodes
-                color_out_all[items, :] = color_out_eachimg / bpPortion
-
-    return shape_out_all, color_out_all, L2_out_all, L1_out_all
-
-
 #binding pool that stores images along with labels. In this implementation we are only encoding one layer at a time (L1, L2, shape/color maps)
 def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coef, shape_act, color_act,l1_act,l2_act,oneHotShape, oneHotcolor, bs_testing, layernum, normalize_fact ):
     # Store and retrieve multiple items including labels in the binding pool 
@@ -668,6 +593,8 @@ def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coe
     # shape_act:  activations from shape bottleneck
     # color_act:  activations from color bottleneck
     # bs_testing:   number of items  
+    # storeLabels: 0 if labels are not stored, 1 if labels are stored
+    # if labels are not available for the given items, matrices with zero elements are entered as the function's input
   
     with torch.no_grad():  # <---not sure we need this, this code is being executed entirely outside of a training loop
         notLink_all = list()  # will be used to accumulate the specific token linkages
@@ -712,11 +639,12 @@ def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coe
                 BP_in_eachimg = torch.mm(shape_act[items, :].view(1, -1), shape_fw) * shape_coef + torch.mm(color_act[items, :].view(1, -1), color_fw) * color_coef  # binding pool inputs (forward activations)
                 BP_in_Slabels_eachimg=torch.mm(oneHotShape [items, :].view(1, -1), shape_label_fw)
                 BP_in_Clabels_eachimg = torch.mm(oneHotcolor[items, :].view(1, -1), color_label_fw)
+                BP_in_Slabels_eachimg[:, notLink] = 0
+                BP_in_Clabels_eachimg[:, notLink] = 0
 
 
             BP_in_eachimg[:, notLink] = 0  # set not linked activations to zero
-            BP_in_Slabels_eachimg[:, notLink] = 0
-            BP_in_Clabels_eachimg[:, notLink] = 0
+            
             if storeLabels==1:
                 BP_in_all.append(
                     BP_in_eachimg + BP_in_Slabels_eachimg + BP_in_Clabels_eachimg)  # appending and stacking images

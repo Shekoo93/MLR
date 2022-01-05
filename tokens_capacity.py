@@ -125,10 +125,12 @@ def storeretrieve_crosscorrelation_test(setSize, perms, bpsize, bpPortion, shape
     #layernum:  1 = layer 1, otherwise bottleneck (shape and color combined)
     #memory: determines whether the image is stored or not; memory=1: store the item, memory=0: do not store the item     
     corr_multiple = list()
-    l1_coeff = 1
-    l2_coeff =1
     tokenactivation = torch.zeros(setSize, perms)
     whichtoken = torch.zeros(perms)
+    storelabels=0  #labels are not stored
+    #generating zero labels for the BP function's input
+    oneHotShape=torch.zeros(setSize,20) #there are 20 labels for shape, though it does not matter in this function because labels are not stored after all
+    oneHotcolor=torch.zeros(setSize,10)
     trans2 = transforms.ToTensor()
     for rep in range(perms):
         if (rep % 100 == 0):
@@ -164,11 +166,10 @@ def storeretrieve_crosscorrelation_test(setSize, perms, bpsize, bpPortion, shape
                 l1_act_tr[l1_act != 0] = l1_act_tr[l1_act != 0] + 2
                 l1_act_tr[l1_act_tr == 0] = -3
 
-                shape_out_all, color_out_all, l2_out_all, l1_out_all = BPTokens(bpsize, bpPortion, shape_coeff,
+                shape_out_all, color_out_all, l2_out_all, l1_out_all,shapelabel_junk, colorlabel_junk = BPTokens_with_labels(bpsize, bpPortion,storelabels, shape_coeff,
                                                                                 color_coeff,
-                                                                                l1_coeff, l2_coeff,
-                                                                                shape_act, color_act, l1_act_tr, l2_act,
-                                                                                setSize, 1, normalize_fact_novel)             
+                                                                                shape_act, color_act, l1_act_tr, l2_act,oneHotShape, oneHotcolor,setSize, 1, normalize_fact_novel)
+                                                                                             
                 l1_out_all[l1_out_all < 0] = 0
 
                 retrievals, mu_color, log_var_color, mu_shape, log_var_shape = vae.forward_layers(l1_out_all, l2_act,  1,'skip')                                                                                                                                                                                              
@@ -176,11 +177,11 @@ def storeretrieve_crosscorrelation_test(setSize, perms, bpsize, bpPortion, shape
             if memory==0:
                 retrievals = vae.decoder_noskip(shape_act, color_act, 0).cuda()
             else:
-                shape_out_all, color_out_all, l2_out_all, l1_out_all = BPTokens(bpsize, bpPortion, shape_coeff,
-                                                                                color_coeff,
-                                                                                0, 0,
-                                                                                shape_act, color_act, l1_act, l2_act,
+                shape_out_all, color_out_all, l2_out_all, l1_out_all,shapelabel_junk, colorlabel_junk = BPTokens_with_labels(bpsize, bpPortion,storelabels,  shape_coeff,
+                                                                                color_coeff,shape_act, color_act, l1_act, l2_act,oneHotShape, oneHotcolor,
                                                                                 setSize, 0, normalize_fact_familiar)
+                                                                                
+                                                                                
                 retrievals = vae.decoder_noskip(shape_out_all, color_out_all, 0).cuda()
                 
         #Now do the correlations
