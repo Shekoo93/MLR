@@ -1,8 +1,8 @@
 
 #this Function trains 4 classifiers per model: shape labels on shape map, shape labels on color map, color labels on color map and color labels on shape map.
 
+#the 10 basic colors that are used to colorize the stimuli
 colornames = ["red", "blue","green","purple","yellow","cyan","orange","brown","pink","teal"]
-
 
 # prerequisites
 import glob, os
@@ -11,7 +11,6 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from torchvision import datasets, transforms
