@@ -1,6 +1,5 @@
 #This code train the mVAE part of the MLR model
 
-
 #prerequisites
 import torch
 import numpy as np
@@ -19,7 +18,7 @@ from mVAE import train, test, vae,  thecolorlabels, optimizer
 #train for 200 eppochs
 for epoch in range(1, 201):  
     train(epoch,'iterated')
-    colorlabels = np.random.randint(0,10,100000)#regenerate the list of color labels at the start of each test epoch
+    colorlabels = np.random.randint(0,10,100000) #regenerate the list of color labels at the start of each test epoch
     numcolors = 0
     if epoch % 5 ==0:
         test('all')   
