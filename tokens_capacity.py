@@ -75,7 +75,6 @@ def binding_cue(bs_testing, perms,bpsize, bpPortion, shape_coeff, color_coeff,sa
     for rep in range(perms):
             image, shapelabel,idx = next(iter(test_loader_smaller))  # load up one digit
             colorlabel = torch.round(image[0,0,0,0] * 255)
-
             shapelabel2 = shapelabel
             if(samediff == 'diff'):     #if we should be using different digits, grab random labels to get a different one, otherwise we'll be using the same digit
                 while(shapelabel2==shapelabel):
@@ -96,8 +95,7 @@ def binding_cue(bs_testing, perms,bpsize, bpPortion, shape_coeff, color_coeff,sa
             #now do the memory retrieval
             tokenactivation[:, rep], whichtoken[rep], shape_out, color_out, l1_out = BPTokens_binding_all(bpsize,
                                                                                                           bpPortion,shape_coeff,color_coeff,shape_act,color_act,l1_act,bs_testing, 0,shape_act_grey, color_act_grey)
-                                                                                                         
-                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                         
             #predicting the retrived shape and color
             pred_ss= torch.tensor(clf_shapeS.predict(shape_out.cpu()))
             pred_cc = torch.tensor(clf_colorC.predict(color_out.cpu()))
@@ -184,7 +182,7 @@ def storeretrieve_crosscorrelation_test(setSize, perms, bpsize, bpPortion, shape
                                                                                 
                 retrievals = vae.decoder_noskip(shape_out_all, color_out_all, 0).cuda()
                 
-        #Now do the correlations
+        #Now compute the correlations
         corr_fam = list()
         for n in range(imgs.shape[0]):
             a = imgs[n, :].cpu().numpy()
