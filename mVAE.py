@@ -108,7 +108,7 @@ def Colorize_func_secret(img,npflag = 0):
         img = backup
     return img
 
-#to choose a specific class in case is necessary
+#to choose a specific class (0,1,2,..,9) from the dataset (e.g., if selected_labels=2, the model returns all the digit 2's in the dataset)
 def data_filter (data_type, selected_labels):
   data_trans= copy.deepcopy(data_type)
   data_type_labels= data_type.targets
@@ -161,8 +161,8 @@ test_loader_noSkip = torch.utils.data.DataLoader(dataset=test_dataset, batch_siz
 test_loader_skip = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs, shuffle=False,  drop_last=True,num_workers=nw)
 
 #train and test the classifiers on MNIST and f-MNIST (the batch size that contains all the images)
-bs_tr=120000
-bs_te=20000
+bs_tr=120000 #batch size for train data (classifier)
+bs_te=20000  #batch size for test data (classifier)
 train_loader_class= torch.utils.data.DataLoader(dataset=train_dataset, batch_size=bs_tr, shuffle=True,num_workers=nw)
 test_loader_class= torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs_te, shuffle=False,num_workers=nw)
 
@@ -459,7 +459,8 @@ def activations(image):
 #binding pool function for ONE ITEM (also BPTokens function can be used, but this code is faster for 1 item)
 def BP(bp_outdim, l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff,l1_coeff,l2_coeff, normalize_fact):
     with torch.no_grad():
-        bp_in1_dim = l1_act.shape[1]  # dim=256    #inputs to the binding pool
+        #inputs to the binding pool
+        bp_in1_dim = l1_act.shape[1]  # dim=256    
         bp_in2_dim = l2_act.shape[1]  # dim =128
         bp_in3_dim = shape_act.shape[1]  # dim=4
         bp_in4_dim = color_act.shape[1]  # dim=4
@@ -469,6 +470,7 @@ def BP(bp_outdim, l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff
         c2_fw = torch.randn(bp_in2_dim, bp_outdim).cuda()
         c3_fw = torch.randn(bp_in3_dim, bp_outdim).cuda()
         c4_fw = torch.randn(bp_in4_dim, bp_outdim).cuda()
+        
         #backward weights from the BP to mVAE layers
         c1_bw = c1_fw.clone().t()
         c2_bw = c2_fw.clone().t()
@@ -481,8 +483,10 @@ def BP(bp_outdim, l1_act, l2_act, shape_act, color_act, shape_coeff, color_coeff
         BP_layer2_out_all = list()
 
         for idx in range(l1_act.shape[0]):
+            
+            # binding pool inputs (forward activations)
             BP_in_eachimg = torch.mm(shape_act[idx, :].view(1, -1), c3_fw) * shape_coeff + torch.mm(
-                color_act[idx, :].view(1, -1), c4_fw) * color_coeff  # binding pool inputs (forward activations)
+                color_act[idx, :].view(1, -1), c4_fw) * color_coeff  
             BP_L1_each = torch.mm(l1_act[idx, :].view(1, -1), c1_fw) * l1_coeff
             BP_L2_each = torch.mm(l2_act[idx, :].view(1, -1), c2_fw) * l2_coeff
 
@@ -525,7 +529,7 @@ def BPTokens_with_labels(bp_outdim, bpPortion,storeLabels, shape_coef, color_coe
     # storeLabels: 0 if labels are not stored, 1 if labels are stored
     # if labels are not available for the given items, matrices with zero elements are entered as the function's input
   
-    with torch.no_grad():  # <---not sure we need this, this code is being executed entirely outside of a training loop
+    with torch.no_grad():  
         notLink_all = list()  # will be used to accumulate the specific token linkages
         BP_in_all = list()  # will be used to accumulate the bp activations for each item
         bp_in_shape_dim = shape_act.shape[1]  # neurons in the Bottleneck
