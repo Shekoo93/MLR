@@ -1,17 +1,15 @@
 
-# MNIST VAE from http://github.com/lyeoni/pytorch-mnist-VAE/blob/master/pytorch-mnist-VAE.ipynb 
+# MNIST VAE adopted from http://github.com/lyeoni/pytorch-mnist-VAE/blob/master/pytorch-mnist-VAE.ipynb 
 # Modified by Brad Wyble and Shekoofeh Hedayati
 # Modifications:
 # Colorize transform that changes the colors of a grayscale image
-# colors are chosen from 10 options:
-colornames = ["red", "blue", "green", "purple", "yellow", "cyan", "orange", "brown", "pink", "teal"]
-# specified in "colorvals" variable below
-
 # also there is a skip connection from the first layer to the last layer to enable reconstructions of new stimuli
-# and the VAE bottleneck is split, having two different maps
+# and the VAE bottleneck is split, having two different maps:
 # one is trained with a loss function for color only (eliminating all shape info, reserving only the brightest color)
 # the other is trained with a loss function for shape only
 
+# colors are chosen from 10 options:
+colornames = ["red", "blue", "green", "purple", "yellow", "cyan", "orange", "brown", "pink", "teal"]
 
 # prerequisites
 import torch
@@ -205,22 +203,26 @@ class VAE(nn.Module):
         h = F.relu(self.fc4c(z_color)) + F.relu(self.fc4s(z_shape))
         h = F.relu(self.fc5(h))
         return torch.sigmoid(self.fc6(h))
-
+    
+    #decodes from the color map
     def decoder_color(self, z_shape, z_color, hskip):
         h = F.relu(self.fc4c(z_color))
         h = F.relu(self.fc5(h))
         return torch.sigmoid(self.fc6(h))
-
+    
+    #decodes from the shape map
     def decoder_shape(self, z_shape, z_color, hskip):
         h = F.relu(self.fc4s(z_shape))
         h = F.relu(self.fc5(h))
         return torch.sigmoid(self.fc6(h))
-
+    
+    #decodes from shape and color maps
     def decoder_all(self, z_shape, z_color, hskip):
         h = F.relu(self.fc4c(z_color)) + F.relu(self.fc4s(z_shape))
         h = (F.relu(self.fc5(h)) + hskip)
         return torch.sigmoid(self.fc6(h))
-
+    
+    #decodes from the skip connection
     def decoder_skip(self, z_shape, z_color, hskip):
         return torch.sigmoid(self.fc6(hskip))
 
