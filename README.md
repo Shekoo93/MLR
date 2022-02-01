@@ -24,4 +24,4 @@ To get the pre-trained model in addition to the simulation results please visit 
 
 Package Requirements are as listed in requirements.txt
 
--tokens_capacity.py file should not be changed. It consists of functions that compute cross correlations for novel vs. familiar shapes , detect whether a given stimulus is novel or familiar and do the binding test
+-tokens_capacity.py file  consists of functions that compute cross correlations for novel vs. familiar shapes , detect whether a given stimulus is novel or familiar and do the binding test
