@@ -1,5 +1,6 @@
 # MLR
 ****Link to the paper at Nature Human Behvaior: https://www.nature.com/articles/s41562-021-01264-9
+
 -MNIST VAE was adopted from http://github.com/lyeoni/pytorch-mnist-VAE/blob/master/pytorch-mnist-VAE.ipynb 
 
 This is a model of working memory coupled with visual knowledge
