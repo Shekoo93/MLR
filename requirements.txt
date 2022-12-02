@@ -5,3 +5,7 @@ conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
 pip install scikit-learn
 conda install matplotlib
 conda install tqdm imageio
+conda install ipython
+conda install opencv
+conda install pandas
+
